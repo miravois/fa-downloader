@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         FA Downloader
 // @namespace    fa-downloader
-// @version      1.0
+// @version      1.0.1
 // @description  Download FA Media from sites including Twitter/Poipiku/Privatter
 // @author       miravois
 // @license      MIT
@@ -124,7 +124,7 @@
         dbDeleteErrorRecords();
 
         if (isTwitter()) {
-            $(document).on('DOMNodeInserted', twitterInjectAdditionalDownloadButtons);
+            $(document).on('DOMNodeInserted', twitterOnDOMNodeInserted);
             $(document).on({
                 mouseenter: function (e) {
                     $(e.currentTarget).find('svg').prev().addClass('r-zv2cs0');
@@ -269,7 +269,7 @@
         reader.readAsText(file);
     }//end fileUploadImportDBChanged
 
-    //#region END HTML/Event Functions
+    //#endregion END HTML/Event Functions
 
     //#region START Download Functions
 
@@ -458,7 +458,7 @@
         setTwitterUserInfo(twitterUserId, twitterUsername, textId);
     }//end downloadTexts
 
-    //#region END Download Text Function
+    //#endregion END Download Text Function
 
     //#region START Download Video Functions
 
@@ -722,6 +722,11 @@
 
     //#endregion END Twitter Injection Helper Functions
 
+    function twitterOnDOMNodeInserted(event) {
+        twitterGetCurrentUserInfo();
+        twitterInjectAdditionalDownloadButtons(event);
+    }
+
     function twitterGetImageTags(tweet, tweetSelector) {
         let imageTags = [];
         let imgs = tweet.find('img');
@@ -945,6 +950,23 @@
                 });
         });
     }//end twitterApiGetUserInfo
+
+    async function twitterGetCurrentUserInfo() {
+        if (window.location.href.indexOf('likes') !== -1 || window.location.href.indexOf('search') !== -1) { return; }
+        const divUsername = document.querySelector('[data-testid="UserName"]');
+        if (!divUsername) { return; }
+        const spans = divUsername.querySelectorAll('span');
+        if (!spans) { return; }
+        const spanUsername = spans[spans.length-1];
+        if (!spanUsername) { return; }
+        const twitterUsername = spanUsername.innerText.substring(1);
+
+        if ($('.fad__twitterUserInfo').html().indexOf(twitterUsername) !== -1) { return; }
+
+        const twitterUserInfo = await getTwitterUserInfo(twitterUsername, twitterUsername);
+        if (!twitterUserInfo) { return; }
+        setTwitterUserInfo(twitterUserInfo.TwitterUserId, twitterUserInfo.TwitterUsername, "");
+    }
 
     //#endregion END Twitter Helper Functions
 
@@ -1652,7 +1674,7 @@
         }
     }//end dbImport
 
-    ////#endregion END IndexedDB Functions
+    //#endregion END IndexedDB Functions
 
     //#region Utility Helper Functions
 
