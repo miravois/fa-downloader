@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         FA Downloader
 // @namespace    fa-downloader
-// @version      1.0.1
+// @version      1.0.2
 // @description  Download FA Media from sites including Twitter/Poipiku/Privatter
 // @author       miravois
 // @license      MIT
@@ -425,6 +425,7 @@
             twitterUsername = poipikuGetTwitterUsername();
             siteUserId = poipikuGetSiteUserId();
             textId = poipikuGetTextId();
+            title = poipikuGetTextTitle();
             textContent = poipikuGetTextContent();
         }
         else if (isPrivatter()) {
@@ -1076,9 +1077,16 @@
         return match[1];
     }//end poipikuGetTextId
 
+    function poipikuGetTextTitle() {
+        let title = '';
+        let $title = $('span.IllustItemThumbText').find('span.NovelTitle')
+        if ($title.length) { title = '-' + $title.text(); }
+        return title;
+    }//end poipikuGetTextTitle
+
     function poipikuGetTextContent() {
         const description = $('h1.IllustItemDesc').html().replaceAll('<br>', '\n');
-        let textContent = $('span.IllustItemThumbText').html().replaceAll('<br>', '\n').replaceAll('<div class="NovelSection">', '').replaceAll('<span class="NovelTitle">', '').replaceAll('</span>', '');
+        let textContent = $('span.IllustItemThumbText').html().replaceAll('<br>', '\n').replaceAll('<div class="NovelSection">', '').replaceAll('<span class="NovelTitle">', '').replaceAll('</span>', '').replaceAll('</div>', '');
         if (description && description !== '') {
             textContent = description + '\n\n\n----------\n\n\n' + textContent;
         }
@@ -1098,7 +1106,7 @@
         for (let i = 0; i < $tiles.length; i++) {
             const $tile = $($tiles[i]);
             const infoLink = $tile.children('a.IllustInfo')[0].href;
-            const mediaId = /ID=\d+&TD=(\d+)/.exec(infoLink)[1];
+            const mediaId = /\d+\/(\d+)/.exec(infoLink)[1];
 
             const count = await dbGetDownloadRecordCount(twitterUserId, mediaId, null, IndexedDBIndexEnum.CompUserMediaIndex);
             if (count !== 0) {
@@ -1220,11 +1228,23 @@
 
     function privatterGetTextContent() {
         let text = '';
-        $('div#evernote').find('p').each(function (i, $p) {
-            if ($p.innerHTML && $p.innerHTML !== '') {
-                text += $p.innerHTML.replaceAll('<br>', '\n') + '\n\n\n----------\n\n\n';
-            }
-        });
+        if ($('p.honbun').length)  { 
+            text += $('p.honbun').html().replaceAll('<br>', '\n')
+                .replaceAll('<span class="santen">', '')
+                .replaceAll('<span class="dashes">', '')
+                .replaceAll('</span>', '')
+                //.replaceAll('…','...')
+                //.replaceAll('―','—')
+                + '\n\n\n----------\n\n\n';
+        }
+        else if ($('div#evernote').length)  { 
+            $('div#evernote').find('p').each(function (i, $p) {
+                if ($p.html() && $p.html() !== '') {
+                    text += $p.html().replaceAll('<br>', '\n') + '\n\n\n----------\n\n\n';
+                }
+            });
+        }
+
         const regex = /<\/?span.*/g;
         if (regex.test(text)) { text = text.replace(regex, ''); }
         return text;
