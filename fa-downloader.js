@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         FA Downloader
 // @namespace    fa-downloader
-// @version      1.0.2
+// @version      1.0.3
 // @description  Download FA Media from sites including Twitter/Poipiku/Privatter
 // @author       miravois
 // @license      MIT
@@ -26,8 +26,9 @@
 
 // ==/UserScript==
 
-// idb: https://github.com/jakearchibald/idb
+// idb (Indexed DB): https://github.com/jakearchibald/idb
 // jsgif (GIFEncoder): https://github.com/antimatter15/jsgif
+// BEM (CSS naming conventions): http://getbem.com/introduction/
 
 (function () {
     'use strict';
@@ -35,6 +36,7 @@
 
     var ForceDownload = false; // if true, will not re-download for media recorded in DB
     var HideDownloaded = false; // if true, will set already downloaded tiles to be display:none;
+    var MarkDownloaded = false; // if true, will only record in DB without actually downloading files
     var HideGetDownloadRecordCountMessage = true; // true, will not log to console for dbGetDownloadRecordCount()
 
     var poipikuUserDict = new Map();
@@ -97,6 +99,7 @@
 
     GM_addStyle('.fadMarkDownloaded {background-color:Gainsboro;}');
     GM_addStyle('.fad {font-size:15px;line-height:30px;font-family:Arial;font-weight:normal;position:fixed;top:30%;left:12%;width:300px;}');
+    GM_addStyle('.fad input, input::-webkit-input-placeholder{font-size:10px;}');
     GM_addStyle('.fad__trigger {color:#ee1166;cursor:pointer;font-weight:bold;text-shadow:-1px 0 white, 0 1px white, 1px 0 white, 0 -1px white}');
     GM_addStyle('.fad__panel {background-color:rgba(255,255,255,0.9);color:black;padding:5px;box-shadow:0px 0px 15px #fff;border:10px solid;border-image-slice:1;border-width:5px;border-image-source:linear-gradient(to bottom,#ff7722,white,#0077dd);}');
     GM_addStyle('.fad__panel div {margin:10px;}');
@@ -108,7 +111,8 @@
     GM_addStyle('.fad__status {color:#ff7722}');
     GM_addStyle('.fad__twitterUserInfo {color:#0077dd}');
     GM_addStyle('.fad__addUserInfo {background-color:#ff7722;cursor:pointer;padding:10px 5px;color:white;border-radius:4px;}');
-    GM_addStyle('.fad__addUserInfoSiteUserId, .fad__addUserInfoTwitterUsername, .fad__addUserInfoTwitterUserId {width:55px;}');
+    GM_addStyle('.fad__addUserInfoSiteUserId, .fad__addUserInfoTwitterUserId {width:55px;}');
+    GM_addStyle('.fad__addUserInfoTwitterUsername {width:70px;}');
     GM_addStyle('.fad__exportDB {background-color:#0077dd;cursor:pointer;padding:10px 5px;color:white;border-radius:4px;}');
     GM_addStyle('.fad__importDB {background-color:#ff7722;cursor:pointer;padding:10px 5px;color:white;border-radius:4px;}');
     GM_addStyle('.fad__fileUploadImportDB {position:absolute !important;height:1px;width:1px;overflow:hidden;clip:rect(1px, 1px, 1px, 1px);}');
@@ -120,7 +124,7 @@
     $(document).ready(initialize);
 
     function initialize() {
-        injectFADMediaDownloaderPanel();
+        injectFADPanel();
         dbDeleteErrorRecords();
 
         if (isTwitter()) {
@@ -145,6 +149,8 @@
         }
         else if (isPoipiku()) {
             poipikuMarkDownloaded();
+            poipikuPopulatePassword();
+            poipikuClickExpandButton();
         }
         else if (isPoipikuImage() || isPrivatterImage()) {
             const twitterUserId = getParameterValueFromUrl('twitterUserId');
@@ -194,12 +200,12 @@
 
     //#region START HTML/Event Functions
 
-    function injectFADMediaDownloaderPanel() {
+    function injectFADPanel() {
         $('body').append('<div class="fad"></div>');
         $('.fad').append('<label class="fad__trigger">FAD</label>');
         $('.fad').append('<div class="fad__panel"></div>');
 
-        const headerTextHTML = '<label class="fad__headerText">Fan Art Downloader</label>'
+        const headerTextHTML = '<label class="fad__headerText">Fan Art Downloader</label>';
         const downloadHTML = '<label class="fad__download">DOWNLOAD</label>';
         $('.fad__panel').append('<div class="fad__header">'+headerTextHTML+'&nbsp;&nbsp;&nbsp;'+downloadHTML+'</div>');
 
@@ -213,6 +219,7 @@
         $('.fad__panel').append('<div>'+ addUserInfoSiteUserIdHTML + addUserInfoTwitterUsernameHTML + addUserInfoTwitterUserIdHTML + '&nbsp;&nbsp;&nbsp;' + addUserInfoHTML + '</div>');
         
         $('.fad__panel').append('<div><label><input class="fad__forceDownload" type="checkbox" /> Force Download?</label></div>');
+        $('.fad__panel').append('<div><label><input class="fad__markDownloaded" type="checkbox" /> Mark Downloaded?</label></div>');
         $('.fad__panel').append('<div><label><input class="fad__hideDownloaded" type="checkbox" /> Hide Downloaded?</label></div>');
         
         const exportDBHTML = '<label class="fad__exportDB">EXPORT DB</label>';
@@ -224,12 +231,13 @@
         $('.fad__download').click(downloadMedia);
         $('.fad__addUserInfo').click(addUserInfo);
         $('.fad__forceDownload').click(chkForceDownloadClicked);
+        $('.fad__markDownloaded').click(chkMarkDownloadedClicked);
         $('.fad__hideDownloaded').click(chkHideDownloadedClicked);
         $('.fad__exportDB').click(dbExport);
         $('.fad__fileUploadImportDB').change(fileUploadImportDBChanged);
-        
+
         setStatusText_NeverDownloaded();
-    }//end injectFADMediaDownloaderPanel
+    }//end injectFADPanel
 
     function expandCollapsePanel() {
         if ($('.fad__panel').is(":visible")) {
@@ -253,6 +261,11 @@
         ForceDownload = this.checked;
         log('ForceDownload changed to be: ' + ForceDownload);
     }//end chkForceDownloadClicked
+
+    function chkMarkDownloadedClicked() {
+        MarkDownloaded = this.checked;
+        log('MarkDownloaded changed to be: ' + MarkDownloaded);
+    }//end chkMarkDownloadedClicked
 
     function chkHideDownloadedClicked() {
         HideDownloaded = this.checked;
@@ -353,6 +366,12 @@
             const recordCount = await dbGetDownloadRecordCount(twitterUserId, imgSeriesId, MediaTypeEnum.Image);
             if (recordCount !== 0) { setStatusText_NotDownloaded(); return; }
         }
+        if (MarkDownloaded) {
+            await dbInsertDownloadRecord(twitterUserId, imgSeriesId, MediaTypeEnum.Image);
+            setStatusText_MarkDownloaded();
+            setTwitterUserInfo(twitterUserId, twitterUsername, imgSeriesId);
+            return;
+        }
 
         setStatusText_StartDownload();
 
@@ -445,6 +464,11 @@
             const recordCount = await dbGetDownloadRecordCount(twitterUserId, textId, MediaTypeEnum.Text);
             if (recordCount !== 0) { setStatusText_NotDownloaded(); return; }
         }
+        if (MarkDownloaded) {
+            setStatusText_MarkDownloaded();
+            setTwitterUserInfo(twitterUserId, twitterUsername, textId);
+            return;
+        }
 
         setStatusText_StartDownload();
 
@@ -454,7 +478,6 @@
         await dbInsertDownloadRecord(twitterUserId, textId, MediaTypeEnum.Text);
         await sleep(150);
 
-        log('Downloaded fileName: ' + fileName);
         setStatusText_Downloaded();
         setTwitterUserInfo(twitterUserId, twitterUsername, textId);
     }//end downloadTexts
@@ -1164,6 +1187,24 @@
         });
     }//end poipikuGetImageData
 
+    function poipikuPopulatePassword() {
+        if ($('h1.IllustItemDesc').length && $('input.IllustItemExpandPass').length) {
+            let password = '';
+            const description = $('h1.IllustItemDesc').text();
+            if (description.indexOf('yes') !== -1) { password = 'yes'; }
+            else if (description.indexOf('Yes') !== -1) { password = 'Yes'; }
+            else if (description.indexOf('YES') !== -1) { password = 'YES'; }
+
+            $('input.IllustItemExpandPass').val(password);
+        }
+    }//end poipikuPopulatePassword
+
+    function poipikuClickExpandButton() {
+        if ($('a.IllustItemExpandBtn').length) {
+            $('a.IllustItemExpandBtn').trigger('click');
+        }
+    }//end poipikuClickExpandButton
+
     //#endregion END Poipiku Helper Functions
 
     //#region START Privatter Helper Functions
@@ -1742,11 +1783,11 @@
     }//end setStatusText
 
     function setStatusText_NeverDownloaded() {
-        $('.fad__status').html('No Download status available.');
+        $('.fad__status').html('No download status available.');
     }//end setStatusText_NeverDownloaded
 
     function setStatusText_StartDownload() {
-        $('.fad__status').html('Start Downloading...');
+        $('.fad__status').html('Start downloading...');
     }//end setStatusText_StartDownload
 
     function setStatusText_NotDownloaded() {
@@ -1763,6 +1804,10 @@
 
     function setStatusText_ConvertingGIF(index) {
         $('.fad__status').html('Converting GIF... ' + index);
+    }//end setStatusText_ConvertingGIF
+
+    function setStatusText_MarkDownloaded() {
+        $('.fad__status').html('Marked as downloaded successfully!');
     }//end setStatusText_ConvertingGIF
 
     function setTwitterUserInfo(twitterUserId, twitterUsername, tweetId) {
