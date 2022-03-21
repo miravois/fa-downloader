@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         FA Downloader
 // @namespace    fa-downloader
-// @version      1.0.3
+// @version      1.0.4
 // @description  Download FA Media from sites including Twitter/Poipiku/Privatter
 // @author       miravois
 // @license      MIT
@@ -1194,6 +1194,8 @@
             if (description.indexOf('yes') !== -1) { password = 'yes'; }
             else if (description.indexOf('Yes') !== -1) { password = 'Yes'; }
             else if (description.indexOf('YES') !== -1) { password = 'YES'; }
+            else if (description.indexOf('y') !== -1) { password = 'y'; }
+            else if (description.indexOf('Y') !== -1) { password = 'Y'; }
 
             $('input.IllustItemExpandPass').val(password);
         }
