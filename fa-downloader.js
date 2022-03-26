@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         FA Downloader
 // @namespace    fa-downloader
-// @version      1.0.4
+// @version      1.0.5
 // @description  Download FA Media from sites including Twitter/Poipiku/Privatter
 // @author       miravois
 // @license      MIT
@@ -17,9 +17,9 @@
 // @grant        GM_openInTab
 // @require      http://code.jquery.com/jquery-3.4.1.min.js
 // @require      https://cdn.jsdelivr.net/npm/idb@7/build/umd.js
-// @require      https://greasyfork.org/scripts/428487-gif-encoder/code/gif-encoder.js?version=1028787
-// @require      https://greasyfork.org/scripts/428486-neu-quant/code/neu-quant.js?version=1028788
 // @require      https://greasyfork.org/scripts/428485-lzw-encoder/code/lzw-encoder.js?version=1028790
+// @require      https://greasyfork.org/scripts/428486-neu-quant/code/neu-quant.js?version=1028788
+// @require      https://greasyfork.org/scripts/428487-gif-encoder/code/gif-encoder.js?version=1028787
 // @connect      tweeterid.com
 // @connect      codeofaninja.com
 // @connect      img-org.poipiku.com
@@ -32,6 +32,9 @@
 
 (function () {
     'use strict';
+
+    //#region Constants
+
     const $ = window.jQuery;
 
     var ForceDownload = false; // if true, will not re-download for media recorded in DB
@@ -97,6 +100,10 @@
         }
     })();
 
+    //#endregion Constants
+
+    //#region Styles
+
     GM_addStyle('.fadMarkDownloaded {background-color:Gainsboro;}');
     GM_addStyle('.fad {font-size:15px;line-height:30px;font-family:Arial;font-weight:normal;position:fixed;top:30%;left:12%;width:300px;}');
     GM_addStyle('.fad input, input::-webkit-input-placeholder{font-size:10px;}');
@@ -120,6 +127,10 @@
     const TwitterDownloadIconHTML = '<g xmlns="http://www.w3.org/2000/svg" style="color:#0077dd;"><g transform="rotate(-180 11.999625205993652,9.00012493133545)"><path d="M17.53 7.47l-5-5c-.293-.293-.768-.293-1.06 0l-5 5c-.294.293-.294.768 0 1.06s.767.294 1.06 0l3.72-3.72V15c0 .414.336.75.75.75s.75-.336.75-.75V4.81l3.72 3.72c.146.147.338.22.53.22s.384-.072.53-.22c.293-.293.293-.767 0-1.06z"/></g><g><path d="M19.708 21.944H4.292C3.028 21.944 2 20.916 2 19.652V14c0-.414.336-.75.75-.75s.75.336.75.75v5.652c0 .437.355.792.792.792h15.416c.437 0 .792-.355.792-.792V14c0-.414.336-.75.75-.75s.75.336.75.75v5.652c0 1.264-1.028 2.292-2.292 2.292z"/></g></g>'
     const TwitterMarkIconHTML = '<g xmlns="http://www.w3.org/2000/svg" style="color:#ff7722;"><g transform="rotate(0 11.999625205993652,9.00012493133545)"><path d="M17.53 7.47l-5-5c-.293-.293-.768-.293-1.06 0l-5 5c-.294.293-.294.768 0 1.06s.767.294 1.06 0l3.72-3.72V15c0 .414.336.75.75.75s.75-.336.75-.75V4.81l3.72 3.72c.146.147.338.22.53.22s.384-.072.53-.22c.293-.293.293-.767 0-1.06z"/></g><g><path d="M19.708 21.944H4.292C3.028 21.944 2 20.916 2 19.652V14c0-.414.336-.75.75-.75s.75.336.75.75v5.652c0 .437.355.792.792.792h15.416c.437 0 .792-.355.792-.792V14c0-.414.336-.75.75-.75s.75.336.75.75v5.652c0 1.264-1.028 2.292-2.292 2.292z"/></g></g>'
     const TwitterModalSelector = 'div[aria-modal="true"]';
+
+    //#endregion Styles
+
+    //#region Initializations
 
     $(document).ready(initialize);
 
@@ -165,40 +176,9 @@
         }
     }//end initialize
 
-    async function getTwitterUserInfo(siteUserId, twitterUsername) {
-        let twitterUserId = null;
+    //#endregion Initializations
 
-        const userRecord = await dbGetUserRecord(siteUserId);
-        if (userRecord && userRecord.TwitterUserId !== 'error') {
-            return userRecord; 
-        }
-
-        if (twitterUsername) {
-            twitterUserId = await ajaxGetTwitterUserId(twitterUsername);
-            logTwitterUserInfo(twitterUsername, twitterUserId);
-        }
-        if (!twitterUserId || twitterUserId === 'error') { // get from dict
-            if (isPoipiku()) {
-                twitterUsername = poipikuGetTwitterUsernameUsingDict();
-            }
-            twitterUserId = await ajaxGetTwitterUserId(twitterUsername);
-            logTwitterUserInfo(twitterUsername, twitterUserId);
-        }
-
-        if (twitterUsername && twitterUserId && twitterUserId !== 'error') {
-            dbPutUserRecord(siteUserId, twitterUserId, twitterUsername);
-            logTwitterUserInfo(twitterUsername, twitterUserId);
-            return {
-                SiteUserId: siteUserId,
-                TwitterUserId: twitterUserId,
-                TwitterUsername: twitterUsername
-            };
-        }
-        logError('Failed to get twitterUserInfo');
-        return null;
-    }//end getTwitterUserInfo
-
-    //#region START HTML/Event Functions
+    //#region HTML/Event Functions
 
     function injectFADPanel() {
         $('body').append('<div class="fad"></div>');
@@ -247,16 +227,6 @@
         }
     }//end expandCollapsePanel
 
-    function addUserInfo() {
-        const siteUserId = $('.fad__addUserInfoSiteUserId').val();
-        const twitterUsername = $('.fad__addUserInfoTwitterUsername').val();
-        const twitterUserId = $('.fad__addUserInfoTwitterUserId').val();
-        if (siteUserId && twitterUsername && twitterUserId) {
-            log('Adding to User DB table: SiteUserId='+siteUserId+' twitterUsername='+twitterUsername+' twitterUserId='+twitterUserId)
-            dbInsertUserRecord(siteUserId, twitterUserId, twitterUsername);
-        }
-    }//end addUserInfo
-
     function chkForceDownloadClicked() {
         ForceDownload = this.checked;
         log('ForceDownload changed to be: ' + ForceDownload);
@@ -282,9 +252,9 @@
         reader.readAsText(file);
     }//end fileUploadImportDBChanged
 
-    //#endregion END HTML/Event Functions
+    //#endregion HTML/Event Functions
 
-    //#region START Download Functions
+    //#region Download Functions
 
     async function downloadMedia(event) {
         if (hasImages(event)) {
@@ -328,7 +298,7 @@
         return false;
     }//end hasVideo
 
-    //#region START Download Image Functions
+    //#region Download Image Functions
 
     async function downloadImages(event) {
         let siteUserId = null, twitterUsername = null, twitterUserId = null;
@@ -432,9 +402,9 @@
         log('Downloaded fileName: ' + fileName);
     }//end downloadImageFromUrl
 
-    //#endregion END Download Image Functions
+    //#endregion Download Image Functions
 
-    //#region START Download Text Functions
+    //#region Download Text Functions
 
     async function downloadTexts() {
         let siteUserId = null, twitterUsername = null, twitterUserId = null;
@@ -482,9 +452,9 @@
         setTwitterUserInfo(twitterUserId, twitterUsername, textId);
     }//end downloadTexts
 
-    //#endregion END Download Text Function
+    //#endregion Download Text Function
 
-    //#region START Download Video Functions
+    //#region Download Video Functions
 
     async function downloadVideo(event) {
         let siteUserId = null, twitterUsername = null, twitterUserId = null;
@@ -585,13 +555,217 @@
         }
     }//end downloadGifVideo
 
-    //#endregion END Download Video Functions
+    function encode64(input) {
+        var output = "", i = 0, l = input.length,
+        key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=", 
+        chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+        while (i < l) {
+            chr1 = input.charCodeAt(i++);
+            chr2 = input.charCodeAt(i++);
+            chr3 = input.charCodeAt(i++);
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
+            if (isNaN(chr2)) enc3 = enc4 = 64;
+            else if (isNaN(chr3)) enc4 = 64;
+            output = output + key.charAt(enc1) + key.charAt(enc2) + key.charAt(enc3) + key.charAt(enc4);
+        }
+        return output;
+    }//end encode64
 
-    //#endregion END Download Functions
+    //#endregion Download Video Functions
 
-    //#region START Twitter Helper Functions
+    //#endregion Download Functions
 
-    //#region START Twitter Injection Helper Functions
+    //#region Twitter Helper Functions
+
+    function twitterOnDOMNodeInserted(event) {
+        twitterGetCurrentUserInfo();
+        twitterInjectAdditionalDownloadButtons(event);
+    }
+
+    async function twitterMarkDownload(event) {
+        const twitterTweetSelector = event.data;
+        const $twitterTweet = $(event.currentTarget).closest(twitterTweetSelector);
+        const twitterUsername = twitterGetTwitterUsername($twitterTweet, twitterTweetSelector);
+        const twitterUserInfo = await getTwitterUserInfo(twitterUsername, twitterUsername);
+        if (!twitterUserInfo) { setStatusText_ErrorDownload(); return; }
+        const twitterUserId = twitterUserInfo.TwitterUserId;
+        const tweetId = twitterGetTweetId($twitterTweet, twitterTweetSelector);
+        await dbInsertDownloadRecord(twitterUserId, tweetId, MediaTypeEnum.Image);
+        if ($twitterTweet) {
+            $twitterTweet.parent().addClass('fadMarkDownloaded');
+            if (HideDownloaded) { $twitterTweet.hide(); }
+        }
+    }//end twitterMarkDownload
+
+    //#region Twitter Get Metadata Functions
+
+    function twitterGetTwitterUsername(tweet, tweetSelector) {
+        const re = /(?:https:\/\/[A-z.]*\/(\w*)\/status\/)(?:\d*)(?:\/?\w*)/g;
+        return twitterGetTweetData(tweet, tweetSelector, re);
+    }//end twitterGetTwitterUsername
+
+    function twitterGetTweetId(tweet, tweetSelector) {
+        const re = /(?:https:\/\/[A-z.]*\/\w*\/status\/)(\d*)(?:\/?\w*)/g;
+        return twitterGetTweetData(tweet, tweetSelector, re);
+    }//end twitterGetTweetId
+
+    function twitterGetTweetData(tweet, tweetSelector, re) {
+        if (tweetSelector === '.tweet') {
+            return tweet.data("tweet-id")
+        } else if (tweetSelector === 'article') {
+            for (const element of tweet.find('a').toArray()) {
+                const match = re.exec(element.href)
+                if (match) {
+                    return match[1];
+                }
+            }
+        } else if (tweetSelector === TwitterModalSelector) {
+            const match = re.exec(window.location.href)
+            if (match) {
+                return match[1];
+            }
+        }
+    }//end twitterGetTweetData
+
+    async function twitterGetCurrentUserInfo() {
+        if (window.location.href.indexOf('likes') !== -1 || window.location.href.indexOf('search') !== -1) { return; }
+        const divUsername = document.querySelector('[data-testid="UserName"]');
+        if (!divUsername) { return; }
+        const spans = divUsername.querySelectorAll('span');
+        if (!spans) { return; }
+        const spanUsername = spans[spans.length-1];
+        if (!spanUsername) { return; }
+        const twitterUsername = spanUsername.innerText.substring(1);
+
+        if ($('.fad__twitterUserInfo').html().indexOf(twitterUsername) !== -1) { return; }
+
+        const twitterUserInfo = await getTwitterUserInfo(twitterUsername, twitterUsername);
+        if (!twitterUserInfo) { return; }
+        setTwitterUserInfo(twitterUserInfo.TwitterUserId, twitterUserInfo.TwitterUsername, "");
+    }
+
+    //#endregion Twitter Get Metadata Functions
+
+    //#region Twitter Image Functions
+
+    function twitterGetImageTags(tweet, tweetSelector) {
+        let imageTags = [];
+        let imgs = tweet.find('img');
+        if (tweetSelector === TwitterModalSelector && imgs.length) {
+            imgs = $(imgs[twitterGetIndexOfImage(tweetSelector)]);
+        }
+        for (let i = 0; i < imgs.length; i++) {
+            let imgTag = imgs[i]
+            let url = $(imgTag).attr('src');
+            if (/(https:\/\/pbs.twimg.com\/media\/.*)$/g.test(url)) {
+                imageTags.push(imgTag);
+            }
+        }
+        return imageTags;
+    }//end twitterGetImageTags
+
+    function twitterGetImageUrls(tweet, tweetSelector) {
+        let imgUrls = [];
+        const imageTags = twitterGetImageTags(tweet, tweetSelector);
+        for (let i = 0; i < imageTags.length; i++) {
+            let imgTag = imageTags[i]
+            let url = $(imgTag).attr('src');
+            if (/(https:\/\/pbs.twimg.com\/media\/.*)$/g.test(url)) {
+                const regex = /(name=)(.*)(\&?.*)/g;
+                if (regex.test(url)) { url = url.replace(regex, '$1orig$3'); }
+                else if (url.includes('=')) { url = url + '&name=orig'; }
+                else { url = url + '?name=orig'; }
+                imgUrls.push(url);
+            }
+        }
+        return imgUrls;
+    }//end twitterGetImageUrls
+
+    function twitterGetImageExtension(url) {
+        const regex = /(?:\?|\&)format\=([^&]+)/g;
+        const match = regex.exec(url);
+        return match[1];
+    }//end twitterGetImageExtension
+
+    function twitterGetIndexOfImage(tweetSelector) {
+        if (tweetSelector !== TwitterModalSelector) { return; }
+        const splited = window.location.pathname.split('/')
+        return Number(splited[splited.length - 1]) - 1
+    }//end twitterGetIndexOfImage
+
+    function twitterGetMaximumZindex() {
+        function intOrNaN(x) {
+            return /^\d+$/.test(x) ? +x : NaN;
+        }
+        let maxZ = 0;
+        $('div').each((element, index) => {
+            try {
+                var indexCurrent = intOrNaN($(element).css("z-index"));
+                if (indexCurrent > maxZ) {
+                    maxZ = indexCurrent;
+                }
+            } catch { }
+        });
+        return maxZ;
+    }//end twitterGetMaximumZindex
+
+    function twitterGetTweetIndex(statusUrl) {
+        const re = /(?:https:\/\/[A-z.]*\/\w*\/status\/)(?:\d*\/?\w*\/)(\d)/g;
+        const match = re.exec(statusUrl)
+        if (match) { return match[1]; }
+        return 0;
+    }//end twitterGetTweetIndex
+
+    //#endregion Twitter Image Functions
+
+    //#region Twitter Video Functions
+
+    function twitterApiGetMp4Url(tweetId) {
+        const url = "https://api.twitter.com/1.1/statuses/show.json?include_profile_interstitial_type=1&include_blocking=1&include_blocked_by=1&include_followed_by=1&include_want_retweets=1&include_mute_edge=1&include_can_dm=1&skip_status=1&cards_platform=Web-12&include_cards=1&include_ext_alt_text=true&include_reply_count=1&tweet_mode=extended&trim_user=false&include_ext_media_color=true&id="
+            + tweetId;
+        const token = getCookie("ct0");
+        return new Promise((resolve, reject) => {
+            var init = {
+                origin: 'https://mobile.twitter.com',
+                headers: {
+                    "Accept": '*/*',
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0",
+                    "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+                    "x-csrf-token": token,
+                },
+                credentials: 'include',
+                referrer: 'https://mobile.twitter.com'
+            };
+            fetch(url, init)
+                .then((response) => {
+                    if (response.status == 200) {
+                        response.json().then((json) => {
+                            let mp4Variants = json.extended_entities.media[0].video_info.variants.filter(variant => variant.content_type === 'video/mp4')
+                            mp4Variants = mp4Variants.sort((a, b) => (b.bitrate - a.bitrate))
+                            let url = '';
+                            if (mp4Variants.length) { url = mp4Variants[0].url }
+                            resolve(url);
+                        })
+                    } else {
+                        reject({
+                            status: response.status,
+                            statusText: response.statusText
+                        });
+                    }
+                })
+                .catch((err) => {
+                    logError(err);
+                    reject({ error: err });
+                });
+        });
+    }//end twitterApiGetMp4Url
+
+    //#endregion Twitter Video Functions
+
+    //#region Twitter Injection Functions
 
     function twitterInjectDownloadButton(target) {
         const tweet = $(target).closest('.tweet');
@@ -744,265 +918,56 @@
         return $(target).find('button.fad_js_download')[0];
     }//end twitterHasVideoDownloadButton
 
-    //#endregion END Twitter Injection Helper Functions
+    //#endregion Twitter Injection Functions
 
-    function twitterOnDOMNodeInserted(event) {
-        twitterGetCurrentUserInfo();
-        twitterInjectAdditionalDownloadButtons(event);
-    }
+    //#endregion Twitter Helper Functions
 
-    function twitterGetImageTags(tweet, tweetSelector) {
-        let imageTags = [];
-        let imgs = tweet.find('img');
-        if (tweetSelector === TwitterModalSelector && imgs.length) {
-            imgs = $(imgs[twitterGetIndexOfImage(tweetSelector)]);
-        }
-        for (let i = 0; i < imgs.length; i++) {
-            let imgTag = imgs[i]
-            let url = $(imgTag).attr('src');
-            if (/(https:\/\/pbs.twimg.com\/media\/.*)$/g.test(url)) {
-                imageTags.push(imgTag);
-            }
-        }
-        return imageTags;
-    }//end twitterGetImageTags
+    //#region Poipiku Helper Functions
 
-    function twitterGetImageUrls(tweet, tweetSelector) {
-        let imgUrls = [];
-        const imageTags = twitterGetImageTags(tweet, tweetSelector);
-        for (let i = 0; i < imageTags.length; i++) {
-            let imgTag = imageTags[i]
-            let url = $(imgTag).attr('src');
-            if (/(https:\/\/pbs.twimg.com\/media\/.*)$/g.test(url)) {
-                const regex = /(name=)(.*)(\&?.*)/g;
-                if (regex.test(url)) { url = url.replace(regex, '$1orig$3'); }
-                else if (url.includes('=')) { url = url + '&name=orig'; }
-                else { url = url + '?name=orig'; }
-                imgUrls.push(url);
-            }
-        }
-        return imgUrls;
-    }//end twitterGetImageUrls
+    async function poipikuMarkDownloaded() {
+        if (!/poipiku.com\/\d+/.test(window.location.href) && !/IllustListPcV/.test(window.location.href)) { return; }
 
-    function twitterGetTwitterUsername(tweet, tweetSelector) {
-        const re = /(?:https:\/\/[A-z.]*\/(\w*)\/status\/)(?:\d*)(?:\/?\w*)/g;
-        return twitterGetTweetData(tweet, tweetSelector, re);
-    }//end twitterGetTwitterUsername
-
-    function twitterGetTweetId(tweet, tweetSelector) {
-        const re = /(?:https:\/\/[A-z.]*\/\w*\/status\/)(\d*)(?:\/?\w*)/g;
-        return twitterGetTweetData(tweet, tweetSelector, re);
-    }//end twitterGetTweetId
-
-    function twitterGetImageExtension(url) {
-        const regex = /(?:\?|\&)format\=([^&]+)/g;
-        const match = regex.exec(url);
-        return match[1];
-    }//end twitterGetImageExtension
-
-    function twitterGetTweetData(tweet, tweetSelector, re) {
-        if (tweetSelector === '.tweet') {
-            return tweet.data("tweet-id")
-        } else if (tweetSelector === 'article') {
-            for (const element of tweet.find('a').toArray()) {
-                const match = re.exec(element.href)
-                if (match) {
-                    return match[1];
-                }
-            }
-        } else if (tweetSelector === TwitterModalSelector) {
-            const match = re.exec(window.location.href)
-            if (match) {
-                return match[1];
-            }
-        }
-    }//end twitterGetTweetData
-
-    function twitterGetIndexOfImage(tweetSelector) {
-        if (tweetSelector !== TwitterModalSelector) { return; }
-        const splited = window.location.pathname.split('/')
-        return Number(splited[splited.length - 1]) - 1
-    }//end twitterGetIndexOfImage
-
-    function twitterGetTweetIndex(statusUrl) {
-        const re = /(?:https:\/\/[A-z.]*\/\w*\/status\/)(?:\d*\/?\w*\/)(\d)/g;
-        const match = re.exec(statusUrl)
-        if (match) { return match[1]; }
-        return 0;
-    }//end twitterGetTweetIndex
-
-    function twitterGetMaximumZindex() {
-        function intOrNaN(x) {
-            return /^\d+$/.test(x) ? +x : NaN;
-        }
-        let maxZ = 0;
-        $('div').each((element, index) => {
-            try {
-                var indexCurrent = intOrNaN($(element).css("z-index"));
-                if (indexCurrent > maxZ) {
-                    maxZ = indexCurrent;
-                }
-            } catch { }
-        });
-        return maxZ;
-    }//end twitterGetMaximumZindex
-
-    async function twitterMarkDownload(event) {
-        const twitterTweetSelector = event.data;
-        const $twitterTweet = $(event.currentTarget).closest(twitterTweetSelector);
-        const twitterUsername = twitterGetTwitterUsername($twitterTweet, twitterTweetSelector);
-        const twitterUserInfo = await getTwitterUserInfo(twitterUsername, twitterUsername);
-        if (!twitterUserInfo) { setStatusText_ErrorDownload(); return; }
-        const twitterUserId = twitterUserInfo.TwitterUserId;
-        const tweetId = twitterGetTweetId($twitterTweet, twitterTweetSelector);
-        await dbInsertDownloadRecord(twitterUserId, tweetId, MediaTypeEnum.Image);
-        if ($twitterTweet) {
-            $twitterTweet.parent().addClass('fadMarkDownloaded');
-            if (HideDownloaded) { $twitterTweet.hide(); }
-        }
-    }//end twitterMarkDownload
-
-    async function ajaxGetTwitterUserId(username) {
-        let userId = null;
-        try {
-            let apiResponse = await twitterApiGetUserInfo(username);
-            if (apiResponse && apiResponse.length > 0) {
-                userId = apiResponse[0].id_str;
-            } else { 
-                throw 'Failed to get users/lookup info from Twitter API.';
-            }
-        } catch (error) {
-            logError(error);
-            try {
-                let htmlResponse = await ajaxGetTwitterUserIdUsingCodeofaninjaApi(username);
-                let regex = /Twitter Numeric ID: (\d+)/;
-                let match = regex.exec(htmlResponse);
-                userId = match[1];
-            } catch (error) {
-                logError(error);
-                userId = await ajaxGetTwitterUserIdUsingTweeteridApi(username);
-            }
-        }
-        if (userId === 'error') {
-            logError('Failed to retrieve twitterUserId!');
-            userId = null;
-        }
-        return userId;
-    }//end ajaxGetTwitterUserId
-
-    function ajaxGetTwitterUserIdUsingTweeteridApi(username) {
-        return gmPost('https://tweeterid.com/ajax.php', 'input=' + username);
-    }//end ajaxGetTwitterUserIdUsingTweeteridApi
-
-    function ajaxGetTwitterUserIdUsingCodeofaninjaApi(username) {
-        return gmPost('https://codeofaninja.com/tools/find-twitter-id/find-twitter-id-answer.php', 'username=' + username);
-    }//end ajaxGetTwitterUserIdUsingCodeofaninjaApi
-
-    function twitterApiGetMp4Url(tweetId) {
-        const url = "https://api.twitter.com/1.1/statuses/show.json?include_profile_interstitial_type=1&include_blocking=1&include_blocked_by=1&include_followed_by=1&include_want_retweets=1&include_mute_edge=1&include_can_dm=1&skip_status=1&cards_platform=Web-12&include_cards=1&include_ext_alt_text=true&include_reply_count=1&tweet_mode=extended&trim_user=false&include_ext_media_color=true&id="
-            + tweetId;
-        const token = getCookie("ct0");
-        return new Promise((resolve, reject) => {
-            var init = {
-                origin: 'https://mobile.twitter.com',
-                headers: {
-                    "Accept": '*/*',
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0",
-                    "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-                    "x-csrf-token": token,
-                },
-                credentials: 'include',
-                referrer: 'https://mobile.twitter.com'
-            };
-            fetch(url, init)
-                .then((response) => {
-                    if (response.status == 200) {
-                        response.json().then((json) => {
-                            let mp4Variants = json.extended_entities.media[0].video_info.variants.filter(variant => variant.content_type === 'video/mp4')
-                            mp4Variants = mp4Variants.sort((a, b) => (b.bitrate - a.bitrate))
-                            let url = '';
-                            if (mp4Variants.length) { url = mp4Variants[0].url }
-                            resolve(url);
-                        })
-                    } else {
-                        reject({
-                            status: response.status,
-                            statusText: response.statusText
-                        });
-                    }
-                })
-                .catch((err) => {
-                    logError(err);
-                    reject({ error: err });
-                });
-        });
-    }//end twitterApiGetMp4Url
-
-    function twitterApiGetUserInfo(twitterUsername) {
-        const url = "https://api.twitter.com/1.1/users/lookup.json?screen_name="
-            + twitterUsername;
-        const token = getCookie("ct0");
-        return new Promise((resolve, reject) => {
-            var init = {
-                origin: 'https://mobile.twitter.com',
-                headers: {
-                    "Accept": '*/*',
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0",
-                    "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-                    "x-csrf-token": token,
-                },
-                credentials: 'include',
-                referrer: 'https://mobile.twitter.com'
-            };
-            fetch(url, init)
-                .then((response) => {
-                    if (response.status == 200) {
-                        response.json().then((json) => {
-                            resolve(json);
-                        })
-                    } else {
-                        logError(response);
-                        reject({
-                            status: response.status,
-                            statusText: response.statusText
-                        });
-                    }
-                })
-                .catch((err) => {
-                    logError(err);
-                    reject({ error: err });
-                });
-        });
-    }//end twitterApiGetUserInfo
-
-    async function twitterGetCurrentUserInfo() {
-        if (window.location.href.indexOf('likes') !== -1 || window.location.href.indexOf('search') !== -1) { return; }
-        const divUsername = document.querySelector('[data-testid="UserName"]');
-        if (!divUsername) { return; }
-        const spans = divUsername.querySelectorAll('span');
-        if (!spans) { return; }
-        const spanUsername = spans[spans.length-1];
-        if (!spanUsername) { return; }
-        const twitterUsername = spanUsername.innerText.substring(1);
-
-        if ($('.fad__twitterUserInfo').html().indexOf(twitterUsername) !== -1) { return; }
-
-        const twitterUserInfo = await getTwitterUserInfo(twitterUsername, twitterUsername);
+        const twitterUsername = poipikuGetTwitterUsername();
+        const siteUserId = poipikuGetSiteUserId();
+        const twitterUserInfo = await getTwitterUserInfo(siteUserId, twitterUsername);
         if (!twitterUserInfo) { return; }
-        setTwitterUserInfo(twitterUserInfo.TwitterUserId, twitterUserInfo.TwitterUsername, "");
-    }
+        const twitterUserId = twitterUserInfo.TwitterUserId;
 
-    //#endregion END Twitter Helper Functions
+        const $tiles = $('div.IllustThumb');
+        for (let i = 0; i < $tiles.length; i++) {
+            const $tile = $($tiles[i]);
+            const infoLink = $tile.children('a.IllustInfo')[0].href;
+            const mediaId = /\d+\/(\d+)/.exec(infoLink)[1];
 
-    //#region START Poipiku Helper Functions
+            const count = await dbGetDownloadRecordCount(twitterUserId, mediaId, null, IndexedDBIndexEnum.CompUserMediaIndex);
+            if (count !== 0) {
+                $tile.addClass('fadMarkDownloaded');
+                if (HideDownloaded) { $tile.hide(); }
+            }
+        }
+    }//end poipikuMarkDownloaded
 
-    function poipikuInjectDownloadButton() {
-        $('header.Header').append('<button type="button" id="btnDownload">Download</button>');
-        $('button[id="btnDownload"]').click(downloadMedia);
+    function poipikuPopulatePassword() {
+        if ($('h1.IllustItemDesc').length && $('input.IllustItemExpandPass').length) {
+            let password = '';
+            const description = $('h1.IllustItemDesc').text();
+            if (description.indexOf('yes') !== -1) { password = 'yes'; }
+            else if (description.indexOf('Yes') !== -1) { password = 'Yes'; }
+            else if (description.indexOf('YES') !== -1) { password = 'YES'; }
+            else if (description.indexOf('y') !== -1) { password = 'y'; }
+            else if (description.indexOf('Y') !== -1) { password = 'Y'; }
 
-        // fix default max-width to display button properly
-        $('div.HeaderWrapper').css('max-width', '1100px');
-    }//end poipikuInjectDownloadButton
+            $('input.IllustItemExpandPass').val(password);
+        }
+    }//end poipikuPopulatePassword
+
+    function poipikuClickExpandButton() {
+        if ($('a.IllustItemExpandBtn').length) {
+            $('a.IllustItemExpandBtn').trigger('click');
+        }
+    }//end poipikuClickExpandButton
+
+    //#region Poipiku Get Metadata Functions
 
     function poipikuGetSiteUserId() {
         let $poipikuUsername = $('h2.UserInfoUserName a');
@@ -1057,6 +1022,10 @@
         return twitterUsername;
     }//end poipikuGetTwitterUserIdUsingDict
 
+    //#endregion Poipiku Get Metadata Functions
+
+    //#region Poipiku Image Functions
+
     function poipikuGetImageUrls() {
         let imgUrls = [];
         $('img.IllustItemThumbImg').each(function (i, img) {
@@ -1087,57 +1056,6 @@
         const match = regex.exec(url);
         return match[1];
     }//end poipikuGetImageExtension
-
-    function poipikuGetTextId() {
-        let match = null;
-        // https://poipiku.com/2243024/4497225.html
-        const regex1 = /poipiku\.com\/\d+\/(\d+)\./;
-        // https://poipiku.com/IllustViewPcV.jsp?ID=2469199&TD=4274916
-        const regex2 = /ID=\d+&TD=(\d+)/;
-        if (regex1.test(window.location.href)) { match = regex1.exec(window.location.href); }
-        else if (regex2.test(window.location.href)) { match = regex2.exec(window.location.href); }
-
-        return match[1];
-    }//end poipikuGetTextId
-
-    function poipikuGetTextTitle() {
-        let title = '';
-        let $title = $('span.IllustItemThumbText').find('span.NovelTitle')
-        if ($title.length) { title = '-' + $title.text(); }
-        return title;
-    }//end poipikuGetTextTitle
-
-    function poipikuGetTextContent() {
-        const description = $('h1.IllustItemDesc').html().replaceAll('<br>', '\n');
-        let textContent = $('span.IllustItemThumbText').html().replaceAll('<br>', '\n').replaceAll('<div class="NovelSection">', '').replaceAll('<span class="NovelTitle">', '').replaceAll('</span>', '').replaceAll('</div>', '');
-        if (description && description !== '') {
-            textContent = description + '\n\n\n----------\n\n\n' + textContent;
-        }
-        return textContent;
-    }//end poipikuGetTextContent
-
-    async function poipikuMarkDownloaded() {
-        if (!/poipiku.com\/\d+/.test(window.location.href) && !/IllustListPcV/.test(window.location.href)) { return; }
-
-        const twitterUsername = poipikuGetTwitterUsername();
-        const siteUserId = poipikuGetSiteUserId();
-        const twitterUserInfo = await getTwitterUserInfo(siteUserId, twitterUsername);
-        if (!twitterUserInfo) { return; }
-        const twitterUserId = twitterUserInfo.TwitterUserId;
-
-        const $tiles = $('div.IllustThumb');
-        for (let i = 0; i < $tiles.length; i++) {
-            const $tile = $($tiles[i]);
-            const infoLink = $tile.children('a.IllustInfo')[0].href;
-            const mediaId = /\d+\/(\d+)/.exec(infoLink)[1];
-
-            const count = await dbGetDownloadRecordCount(twitterUserId, mediaId, null, IndexedDBIndexEnum.CompUserMediaIndex);
-            if (count !== 0) {
-                $tile.addClass('fadMarkDownloaded');
-                if (HideDownloaded) { $tile.hide(); }
-            }
-        }
-    }//end poipikuMarkDownloaded
 
     function poipikuGetImageData(url) {
         return new Promise((resolve, reject) => {
@@ -1187,111 +1105,43 @@
         });
     }//end poipikuGetImageData
 
-    function poipikuPopulatePassword() {
-        if ($('h1.IllustItemDesc').length && $('input.IllustItemExpandPass').length) {
-            let password = '';
-            const description = $('h1.IllustItemDesc').text();
-            if (description.indexOf('yes') !== -1) { password = 'yes'; }
-            else if (description.indexOf('Yes') !== -1) { password = 'Yes'; }
-            else if (description.indexOf('YES') !== -1) { password = 'YES'; }
-            else if (description.indexOf('y') !== -1) { password = 'y'; }
-            else if (description.indexOf('Y') !== -1) { password = 'Y'; }
+    //#endregion Poipiku Image Functions
 
-            $('input.IllustItemExpandPass').val(password);
-        }
-    }//end poipikuPopulatePassword
+    //#region Poipiku Text Functions
 
-    function poipikuClickExpandButton() {
-        if ($('a.IllustItemExpandBtn').length) {
-            $('a.IllustItemExpandBtn').trigger('click');
-        }
-    }//end poipikuClickExpandButton
+    function poipikuGetTextId() {
+        let match = null;
+        // https://poipiku.com/2243024/4497225.html
+        const regex1 = /poipiku\.com\/\d+\/(\d+)\./;
+        // https://poipiku.com/IllustViewPcV.jsp?ID=2469199&TD=4274916
+        const regex2 = /ID=\d+&TD=(\d+)/;
+        if (regex1.test(window.location.href)) { match = regex1.exec(window.location.href); }
+        else if (regex2.test(window.location.href)) { match = regex2.exec(window.location.href); }
 
-    //#endregion END Poipiku Helper Functions
-
-    //#region START Privatter Helper Functions
-
-    function privatterInjectDownloadButton() {
-        $('div.navbar-header').append('<button type="button" id="btnDownload" class="btn btn-default">Download</button>');
-        $('button[id="btnDownload"]').click(downloadMedia);
-    }//end privatterInjectDownloadButton
-
-    function privatterGetTwitterUsername() {
-        let $twitterUsername = $('a[href*="twitter.com"].pull-right');
-        if ($twitterUsername.length === 0) {
-            logError('Failed to find twitter username on page');
-        }
-        $twitterUsername = $twitterUsername[0];
-        let regex = /twitter\.com\/(.*)/;
-        let match = regex.exec($twitterUsername.href);
         return match[1];
-    }//end privatterGetTwitterUsername
+    }//end poipikuGetTextId
 
-    function privatterGetMediaType() {
-        return /privatter\.net\/(\w)/.exec(window.location.href)[1];
-    }//end privatterGetMediaType
-
-    function privatterGetImageUrls() {
-        let imgUrls = [];
-        $('img[src*="cloudfront"]').each(function (i, img) {
-            // https://d2pqhom6oey9wx.cloudfront.net/img_resize/758192460afae2e78852.png
-            imgUrls.push(img.src.replace('img_resize', 'img_original'));
-        });
-        return imgUrls;
-    }//end privatterGetImageUrls
-
-    function privatterGetImageSeriesId() {
-        // https://privatter.net/i/5931960
-        const regex = /privatter\.net\/\w\/(\d+)/;
-        const match = regex.exec(window.location.href);
-        return match[1];
-    }//end privatterGetImageSeriesId
-
-    function privatterGetImageExtension(url) {
-        // https://d2pqhom6oey9wx.cloudfront.net/img_original/758192460afae2e78852.png
-        const regex = /img_original\/.*\.(.*)/;
-        const match = regex.exec(url);
-        return match[1];
-    }//end privatterGetImageExtension
-
-    function privatterGetTextId() {
-        // https://privatter.net/i/5931960
-        const regex = /privatter\.net\/\w\/(\d+)/;
-        const match = regex.exec(window.location.href);
-        return match[1];
-    }//end privatterGetTextId
-
-    function privatterGetTextTitle() {
+    function poipikuGetTextTitle() {
         let title = '';
-        if ($('h1.lead').length && $('h1.lead').text() && $('h1.lead').text() !== '') {
-            title = '-' + $('h1.lead').text();
-        }
+        let $title = $('span.IllustItemThumbText').find('span.NovelTitle')
+        if ($title.length) { title = '-' + $title.text(); }
         return title;
-    }//end privatterGetTextTitle
+    }//end poipikuGetTextTitle
 
-    function privatterGetTextContent() {
-        let text = '';
-        if ($('p.honbun').length)  { 
-            text += $('p.honbun').html().replaceAll('<br>', '\n')
-                .replaceAll('<span class="santen">', '')
-                .replaceAll('<span class="dashes">', '')
-                .replaceAll('</span>', '')
-                //.replaceAll('…','...')
-                //.replaceAll('―','—')
-                + '\n\n\n----------\n\n\n';
+    function poipikuGetTextContent() {
+        const description = $('h1.IllustItemDesc').html().replaceAll('<br>', '\n');
+        let textContent = $('span.IllustItemThumbText').html().replaceAll('<br>', '\n').replaceAll('<div class="NovelSection">', '').replaceAll('<span class="NovelTitle">', '').replaceAll('</span>', '').replaceAll('</div>', '');
+        if (description && description !== '') {
+            textContent = description + '\n\n\n----------\n\n\n' + textContent;
         }
-        else if ($('div#evernote').length)  { 
-            $('div#evernote').find('p').each(function (i, $p) {
-                if ($p.html() && $p.html() !== '') {
-                    text += $p.html().replaceAll('<br>', '\n') + '\n\n\n----------\n\n\n';
-                }
-            });
-        }
+        return textContent;
+    }//end poipikuGetTextContent
 
-        const regex = /<\/?span.*/g;
-        if (regex.test(text)) { text = text.replace(regex, ''); }
-        return text;
-    }//end privatterGetTextContent
+    //#endregion Poipiku Text Functions
+
+    //#endregion Poipiku Helper Functions
+
+    //#region Privatter Helper Functions
 
     async function privatterMarkDownloaded() {
         if (!/privatter.net\/u\//.test(window.location.href)) { return; }
@@ -1317,6 +1167,50 @@
             }
         }
     }//end privatterMarkDownloaded
+
+    //#region Privatter Get Metadata Functions
+
+    function privatterGetTwitterUsername() {
+        let $twitterUsername = $('a[href*="twitter.com"].pull-right');
+        if ($twitterUsername.length === 0) {
+            logError('Failed to find twitter username on page');
+        }
+        $twitterUsername = $twitterUsername[0];
+        let regex = /twitter\.com\/(.*)/;
+        let match = regex.exec($twitterUsername.href);
+        return match[1];
+    }//end privatterGetTwitterUsername
+
+    function privatterGetMediaType() {
+        return /privatter\.net\/(\w)/.exec(window.location.href)[1];
+    }//end privatterGetMediaType
+
+    //#endregion Privatter Get Metadata Functions
+
+    //#region Privatter Image Functions
+
+    function privatterGetImageUrls() {
+        let imgUrls = [];
+        $('img[src*="cloudfront"]').each(function (i, img) {
+            // https://d2pqhom6oey9wx.cloudfront.net/img_resize/758192460afae2e78852.png
+            imgUrls.push(img.src.replace('img_resize', 'img_original'));
+        });
+        return imgUrls;
+    }//end privatterGetImageUrls
+
+    function privatterGetImageSeriesId() {
+        // https://privatter.net/i/5931960
+        const regex = /privatter\.net\/\w\/(\d+)/;
+        const match = regex.exec(window.location.href);
+        return match[1];
+    }//end privatterGetImageSeriesId
+
+    function privatterGetImageExtension(url) {
+        // https://d2pqhom6oey9wx.cloudfront.net/img_original/758192460afae2e78852.png
+        const regex = /img_original\/.*\.(.*)/;
+        const match = regex.exec(url);
+        return match[1];
+    }//end privatterGetImageExtension
 
     function privatterGetImageData(url) {
         url = document.location.origin + document.location.pathname;
@@ -1373,9 +1267,54 @@
         });
     }//end privatterGetImageData
 
-    //#endregion END Privatter Helper Functions
+    //#endregion Privatter Image Functions
 
-    //#region START Web Method Helper Functions
+    //#region Privatter Text Functions
+
+    function privatterGetTextId() {
+        // https://privatter.net/i/5931960
+        const regex = /privatter\.net\/\w\/(\d+)/;
+        const match = regex.exec(window.location.href);
+        return match[1];
+    }//end privatterGetTextId
+
+    function privatterGetTextTitle() {
+        let title = '';
+        if ($('h1.lead').length && $('h1.lead').text() && $('h1.lead').text() !== '') {
+            title = '-' + $('h1.lead').text();
+        }
+        return title;
+    }//end privatterGetTextTitle
+
+    function privatterGetTextContent() {
+        let text = '';
+        if ($('p.honbun').length)  { 
+            text += $('p.honbun').html().replaceAll('<br>', '\n')
+                .replaceAll('<span class="santen">', '')
+                .replaceAll('<span class="dashes">', '')
+                .replaceAll('</span>', '')
+                //.replaceAll('…','...')
+                //.replaceAll('―','—')
+                + '\n\n\n----------\n\n\n';
+        }
+        else if ($('div#evernote').length)  { 
+            $('div#evernote').find('p').each(function (i, $p) {
+                if ($p.html() && $p.html() !== '') {
+                    text += $p.html().replaceAll('<br>', '\n') + '\n\n\n----------\n\n\n';
+                }
+            });
+        }
+
+        const regex = /<\/?span.*/g;
+        if (regex.test(text)) { text = text.replace(regex, ''); }
+        return text;
+    }//end privatterGetTextContent
+
+    //#endregion Privatter Text Functions
+
+    //#endregion Privatter Helper Functions
+
+    //#region Web Method Helper Functions
 
     function gmGet(address, headers, anonymous) {
         log('GET address: ' + getShortUrl(address));
@@ -1427,9 +1366,9 @@
         });
     }//end gmDownload
 
-    //#endregion END Web Method Helper Functions
+    //#endregion Web Method Helper Functions
 
-    //#region START IndexedDB Functions
+    //#region IndexedDB Functions
 
     async function dbGetDB() {
         return await IndexedDB.openDB(IndexedDBName, IndexedDBVersion, {
@@ -1737,7 +1676,7 @@
         }
     }//end dbImport
 
-    //#endregion END IndexedDB Functions
+    //#endregion IndexedDB Functions
 
     //#region Utility Helper Functions
 
@@ -1760,76 +1699,6 @@
     function isPrivatterImage() {
         return SiteType === SiteTypeEnum.PrivatterImage;
     }//end isPrivatterImage
-
-    function getValidWindowsFileName(name) {
-        /*
-         * < (less than)
-         * > (greater than)
-         * : (colon)
-         * " (double quote)
-         * / (forward slash)
-         * \ (backslash)
-         * | (vertical bar or pipe)
-         * ? (question mark)
-         * * (asterisk)
-         */
-        const regex1 = /[<>:"/\\|?*]/g;
-        if (regex1.test(name)) { name = name.replace(regex1, ''); }
-        const regex2 = /\s{2,}/g;
-        if (regex2.test(name)) { name = name.replace(regex2, ' '); }
-        return name;
-    }//end getValidWindowsFileName
-
-    function setStatusText(text) {
-        $('.fad__status').html(text);
-    }//end setStatusText
-
-    function setStatusText_NeverDownloaded() {
-        $('.fad__status').html('No download status available.');
-    }//end setStatusText_NeverDownloaded
-
-    function setStatusText_StartDownload() {
-        $('.fad__status').html('Start downloading...');
-    }//end setStatusText_StartDownload
-
-    function setStatusText_NotDownloaded() {
-        $('.fad__status').html('Not downloaded. <br>IndexedDB already has record. <br>Turn on Force Download if applicable.');
-    }//end setStatusText_NotDownloaded
-
-    function setStatusText_Downloaded() {
-        $('.fad__status').html('Downloaded successfully!');
-    }//end setStatusText_Downloaded
-
-    function setStatusText_ErrorDownload() {
-        $('.fad__status').html('Failed to download! <br>Check console for details.');
-    }//end setStatusText_ErrorDownload
-
-    function setStatusText_ConvertingGIF(index) {
-        $('.fad__status').html('Converting GIF... ' + index);
-    }//end setStatusText_ConvertingGIF
-
-    function setStatusText_MarkDownloaded() {
-        $('.fad__status').html('Marked as downloaded successfully!');
-    }//end setStatusText_ConvertingGIF
-
-    function setTwitterUserInfo(twitterUserId, twitterUsername, tweetId) {
-        const folderName = getValidWindowsFileName(twitterUserId + '-' + twitterUsername);
-        const twitterUserInfoHtml = folderName + '<br>' + tweetId;
-        $('.fad__twitterUserInfo').html(twitterUserInfoHtml);
-        return folderName;
-    }//end setTwitterUserInfo
-
-    function logTwitterUserInfo(username, id) {
-        log('twitterUsername: ' + username + ' twitterUserId: ' + id);
-    }//end logTwitterUserInfo
-
-    function log(obj) {
-        console.dir(obj);
-    }//end log
-
-    function logError(msg) {
-        console.error(msg);
-    }//end logError
 
     function getShortUrl(url) {
         if (url.length > 80) {
@@ -1861,25 +1730,6 @@
         return "";
     }//end getCookie
 
-    function encode64(input) {
-        var output = "", i = 0, l = input.length,
-        key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=", 
-        chr1, chr2, chr3, enc1, enc2, enc3, enc4;
-        while (i < l) {
-            chr1 = input.charCodeAt(i++);
-            chr2 = input.charCodeAt(i++);
-            chr3 = input.charCodeAt(i++);
-            enc1 = chr1 >> 2;
-            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-            enc4 = chr3 & 63;
-            if (isNaN(chr2)) enc3 = enc4 = 64;
-            else if (isNaN(chr3)) enc4 = 64;
-            output = output + key.charAt(enc1) + key.charAt(enc2) + key.charAt(enc3) + key.charAt(enc4);
-        }
-        return output;
-    }//end encode64
-
     function getParameterValueFromUrl(parameterName) {
         var result = null,
             tmp = [];
@@ -1892,6 +1742,190 @@
             });
         return result;
     }//end getParameterValueFromUrl
+
+    //#region Twitter UserInfo Functions
+
+    async function getTwitterUserInfo(siteUserId, twitterUsername) {
+        let twitterUserId = null;
+
+        const userRecord = await dbGetUserRecord(siteUserId);
+        if (userRecord && userRecord.TwitterUserId !== 'error') {
+            return userRecord; 
+        }
+
+        if (twitterUsername) {
+            twitterUserId = await ajaxGetTwitterUserId(twitterUsername);
+            logTwitterUserInfo(twitterUsername, twitterUserId);
+        }
+        if (!twitterUserId || twitterUserId === 'error') { // get from dict
+            if (isPoipiku()) {
+                twitterUsername = poipikuGetTwitterUsernameUsingDict();
+            }
+            twitterUserId = await ajaxGetTwitterUserId(twitterUsername);
+            logTwitterUserInfo(twitterUsername, twitterUserId);
+        }
+
+        if (twitterUsername && twitterUserId && twitterUserId !== 'error') {
+            dbPutUserRecord(siteUserId, twitterUserId, twitterUsername);
+            logTwitterUserInfo(twitterUsername, twitterUserId);
+            return {
+                SiteUserId: siteUserId,
+                TwitterUserId: twitterUserId,
+                TwitterUsername: twitterUsername
+            };
+        }
+        logError('Failed to get twitterUserInfo');
+        return null;
+    }//end getTwitterUserInfo
+
+    function addUserInfo() {
+        const siteUserId = $('.fad__addUserInfoSiteUserId').val();
+        const twitterUsername = $('.fad__addUserInfoTwitterUsername').val();
+        const twitterUserId = $('.fad__addUserInfoTwitterUserId').val();
+        if (siteUserId && twitterUsername && twitterUserId) {
+            log('Adding to User DB table: SiteUserId='+siteUserId+' twitterUsername='+twitterUsername+' twitterUserId='+twitterUserId)
+            dbInsertUserRecord(siteUserId, twitterUserId, twitterUsername);
+        }
+    }//end addUserInfo
+
+    async function ajaxGetTwitterUserId(username) {
+        let userId = null;
+        try {
+            let apiResponse = await twitterApiGetUserInfo(username);
+            if (apiResponse && apiResponse.length > 0) {
+                userId = apiResponse[0].id_str;
+            } else { 
+                throw 'Failed to get users/lookup info from Twitter API.';
+            }
+        } catch (error) {
+            logError(error);
+            try {
+                let htmlResponse = await ajaxGetTwitterUserIdUsingCodeofaninjaApi(username);
+                let regex = /Twitter Numeric ID: (\d+)/;
+                let match = regex.exec(htmlResponse);
+                userId = match[1];
+            } catch (error) {
+                logError(error);
+                userId = await ajaxGetTwitterUserIdUsingTweeteridApi(username);
+            }
+        }
+        if (userId === 'error') {
+            logError('Failed to retrieve twitterUserId!');
+            userId = null;
+        }
+        return userId;
+    }//end ajaxGetTwitterUserId
+
+    function twitterApiGetUserInfo(twitterUsername) {
+        const url = "https://api.twitter.com/1.1/users/lookup.json?screen_name="
+            + twitterUsername;
+        const token = getCookie("ct0");
+        return new Promise((resolve, reject) => {
+            var init = {
+                origin: 'https://mobile.twitter.com',
+                headers: {
+                    "Accept": '*/*',
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0",
+                    "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+                    "x-csrf-token": token,
+                },
+                credentials: 'include',
+                referrer: 'https://mobile.twitter.com'
+            };
+            fetch(url, init)
+                .then((response) => {
+                    if (response.status == 200) {
+                        response.json().then((json) => {
+                            resolve(json);
+                        })
+                    } else {
+                        logError(response);
+                        reject({
+                            status: response.status,
+                            statusText: response.statusText
+                        });
+                    }
+                })
+                .catch((err) => {
+                    logError(err);
+                    reject({ error: err });
+                });
+        });
+    }//end twitterApiGetUserInfo
+
+    function ajaxGetTwitterUserIdUsingTweeteridApi(username) {
+        return gmPost('https://tweeterid.com/ajax.php', 'input=' + username);
+    }//end ajaxGetTwitterUserIdUsingTweeteridApi
+
+    function ajaxGetTwitterUserIdUsingCodeofaninjaApi(username) {
+        return gmPost('https://codeofaninja.com/tools/find-twitter-id/find-twitter-id-answer.php', 'username=' + username);
+    }//end ajaxGetTwitterUserIdUsingCodeofaninjaApi
+
+    //#endregion Twitter UserInfo Functions
+
+    //#region Update Panel Info Functions
+
+    function setStatusText(text) {
+        $('.fad__status').html(text);
+    }//end setStatusText
+
+    function setStatusText_NeverDownloaded() {
+        setStatusText('No download status available.');
+    }//end setStatusText_NeverDownloaded
+
+    function setStatusText_StartDownload() {
+        setStatusText('Start downloading...');
+    }//end setStatusText_StartDownload
+
+    function setStatusText_NotDownloaded() {
+        setStatusText('Not downloaded. <br>IndexedDB already has record. <br>Turn on Force Download if applicable.');
+    }//end setStatusText_NotDownloaded
+
+    function setStatusText_Downloaded() {
+        setStatusText('Downloaded successfully!');
+    }//end setStatusText_Downloaded
+
+    function setStatusText_ErrorDownload() {
+        setStatusText('Failed to download! <br>Check console for details.');
+    }//end setStatusText_ErrorDownload
+
+    function setStatusText_ConvertingGIF(index) {
+        setStatusText('Converting GIF... ' + index);
+    }//end setStatusText_ConvertingGIF
+
+    function setStatusText_MarkDownloaded() {
+        setStatusText('Marked as downloaded successfully!');
+    }//end setStatusText_ConvertingGIF
+
+    function setTwitterUserInfo(twitterUserId, twitterUsername, tweetId) {
+        const folderName = getValidWindowsFileName(twitterUserId + '-' + twitterUsername);
+        const twitterUserInfoHtml = folderName + '<br>' + tweetId;
+        $('.fad__twitterUserInfo').html(twitterUserInfoHtml);
+        return folderName;
+    }//end setTwitterUserInfo
+
+    //#endregion Update Panel Info Functions
+
+    //#region Save Functions
+
+    function getValidWindowsFileName(name) {
+        /*
+         * < (less than)
+         * > (greater than)
+         * : (colon)
+         * " (double quote)
+         * / (forward slash)
+         * \ (backslash)
+         * | (vertical bar or pipe)
+         * ? (question mark)
+         * * (asterisk)
+         */
+        const regex1 = /[<>:"/\\|?*]/g;
+        if (regex1.test(name)) { name = name.replace(regex1, ''); }
+        const regex2 = /\s{2,}/g;
+        if (regex2.test(name)) { name = name.replace(regex2, ' '); }
+        return name;
+    }//end getValidWindowsFileName
 
     function getDownloadImageFileName(twitterUserId, twitterUsername, imgSeriesId, imgIndex, imgExtension) {
         const folderName = getValidWindowsFileName(twitterUserId + '-' + twitterUsername);
@@ -1917,10 +1951,33 @@
         return '###[FAD]###/Twitter/Pictures/' + folderName + '/' + fileName;
     }//end getDownloadGifFileName
 
+    //#endregion Save Functions
+
+    //#region Logging Functions
+
+    function logTwitterUserInfo(username, id) {
+        log('twitterUsername: ' + username + ' twitterUserId: ' + id);
+    }//end logTwitterUserInfo
+
+    function log(obj) {
+        console.dir(obj);
+    }//end log
+
+    function logError(msg) {
+        console.error(msg);
+    }//end logError
+
+    //#endregion Logging Functions
+
+    //#region Prototype Functions
+
     Number.prototype.padLeft = function (base, chr) {
         var len = (String(base || 10).length - String(this).length) + 1;
         return len > 0 ? new Array(len).join(chr || '0') + this : this;
     }
+
+    //#endregion Prototype Functions
+
     //#endregion Utility Helper Functions
 
 })();
