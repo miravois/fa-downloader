@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         FA Downloader
 // @namespace    fa-downloader
-// @version      1.0.5
-// @description  Download FA Media from sites including Twitter/Poipiku/Privatter
+// @version      1.1.0
+// @description  Download FA Media from sites including Twitter/Poipiku/Privatter/Lofter
 // @author       miravois
 // @license      MIT
 // @match        https://twitter.com/*
 // @match        https://*.poipiku.com/*
 // @match        https://privatter.net/*
+// @match        https://*.lofter.com/view
 // @match        https://d2pqhom6oey9wx.cloudfront.net/*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAA7AAAAOwBeShxvQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAdYSURBVFiFpVdtcFXVFV1r73PvgxBADfkkmQrigKXqFFqgY/lhGcXaMnQqiQOSMlCHrwgkwJOgQi9FEJCEDJKMKV91QJg+OxbLCNgWrdjpTCmt1Y7aMgQshIQkgBBDvnjvnv5I8njv5QVo3T/evH3u2muvs/c5955D3KZ5npXLzacfFpFJhriDAFStFREIQAEgii/U4ugLL37tPYL2dnh5K0B+vtWsvJqnlfIQYN9RhN8pKxt5MRl2/cr6dBsITxbgUUdwrMXP3eV59P9vAQuWnB5p1K4isHtr+T1Hb4YN5VsFgII3GAGA8rVnH1XqT1Tsz595Lvfk/yxg4bKa7xqfheGOtmVVVaNbbpYcAF7yztyt0FWqOK0S3lH8/PCGSq8x1QY6y0i+VlQ69M+3LWDR0jMTBHb6nYOGldyqhIlW7p0boQ6XUXhs8cqh+0Mhq1fOXKhQ2Nd+uiLnxC0FFBd/ng31N54/O2z2G93lTGaeZ40bqR2rCtuG3L97HsOxz6s21M1QYszcZ7ODa9ZAh6XW73KMBmcUZzbE4iSR2GpkdcSNLLtZ8lC+1YA9t1PV5osgf7Ce2+l5No5rYWnOPkfskd2b69d6HsOO0aC1/qpErrigkuDpiUr57JWX7m3qKzkA1Nx/bkwH82arMCKAfzWSNzvNnBuTiJsTHPoHQ/x7b9mFJ2cUZzYIWRPa1vCdWExcC5YHa15NHdC+2PNGd8aOe97ZHPr+SFf4H1VRWn6TsJNU+CfSWgUnGsVRiv1Q6YQVGOYY/aywJL0eAPZtafjlwJTIQu24FmnloIppizIX9KrA8uWnMihyNTH5mtVnp0oEQ11wghXNpMX44OrckOtzrZJPGcpMa7B2QWluSKnjBeEsgT/et+G818svTAUAY2xZeyfHPb743g4jaDm0tT69h99ES2F0kiEOJZbRhP3j6uoeAM2OH3lLVNMBYLGXW1u1rvYVgbXzV+TVAoAS6SL6oVqOE/rfc1wtBICCRVn/jM5Y9LAVPgwgFFcBBcYHAoG/JgoQVxap+L81BhWi8rIIRgJA1frz+ymcTsPpOzfV7QMAIzJKgY1qpEwoB63vL07kG+j7x0U4ITrxnj/PP/d55br1dxclBgBde5tii0QYpuCkoT4ktP1J7lcFBHa6obQreQy0o5Q04khlQVHGqWR8v/9FY+UjczOK4irggJoMDABiZKwaZ/2SF/KCAr5pCKrIH+etyDnw9PKcAyryvgoQdsMHnirJDorY9Y5Fr13RYyoazRUVQBP/IokLoN+M1JbmLpzriIKG9mr0OXhFAPan6wBAKlqahWjum89Gc0UXoSGdvgO0ha0pVdUbaz9VXj8pQhXyidcr6mp9H9YRTIOwldb/1m8qG0aGLUcrsbsvvthcNxYhbYvn1aUkgqs21JWpIs0lNhmRKUr50dkvswuVMGJlqWNkqQiUWZmzFPixglPU5QZRSftdddPmRL73KhtTKTeqE62AiHw0CJFvA3g/LsJef1HEOQKyycBfSeqY7g/U1NDW+h+IVTttScYhADhY1fg3WrtDfJaL2HTHMZMTBaQMdMeR/j96VSDF4G0KfpgY4Ig7SYSeEbwrRgOqaASAtzY2DVTqTFEUHtp6aRAAEGhUEVcF7zq0a/xw+PuJfIR93Anz7Rt+jG1dd357h6vFwWDWtdjxPeWNI4jwcBG9IBFpF2MzVO18gseV8AV2gkNWRwwbAvT7UUwWwuGaSfMya2J5Pgk1prZ3ms1jZ941v1cLAEBUKlLDkSAAL3a8cGnGKQDRPf3rbY0jIhkZswJNF4tVgNa09FmBy02TH5ub/kE35OPEmQNAR6cTdCRSEZcz1nmmNPsTY5Cy4+UL30hG0GNPFKUf7nexaYsRPGhoHxh85dKWR+alH75ZzIm9l+8X2sADM4b8q08BANAWaF1liNLdmxqz+iIjaV034Km125XYnhI2PyP7PgWf2NOU7QqfdZw7V/fiShawr6Ih0/ftZhemtGDpkPM3m9mt7KO9l3IpsiFsTMmYgoG9zhl9HkpD1ZcHs6OzksCv1Ghd7FvK6XacpL4T9Q39HIJPDjC26J6Cu64iiZlkgwCgHZ33CUkI7lMgGwBUAVp+XWH7d19IoATEB2gIsbZNxf8UEDgABHKHENIekVEA/pIsT9IKvLmtNg1wyj6+mDEn9lR8aPulXNfiVRX7QddNSCDStZBEAAUnOvTnPzgzrbYnxoasnrLNu/oRJXkFgy/fUsDB6rqU69d1vkLqVPzjANCv+0esOAQXCekYdN3HRAgFIAQo7FRft1H86/2igYBajhdBVsC5Vp0zJae1TwGhysZUx9q9RnCEEL/rWw9o9yy7/K7Bnv6rAiLSJSLqI8bXnlYJicec620zMwoyoheduDUQoB1OkcNTFqRXJ2vNV7WGA19aG0gZjpgXVZwApfVpbZ8L86uaKozQxt204lsQsu6gLy7uVqCFIjACkF0qE/st0tMa6cKIgNKN7YkxjPoCAOSAIW0D5rCA0ZP3fwGTxHDdibM0IwAAAABJRU5ErkJggg==
 // @run-at       document-end
@@ -80,7 +81,8 @@
         Poipiku: 'Poipiku',
         PoipikuImage: 'PoipikuImage',
         Privatter: 'Privatter',
-        PrivatterImage: 'PrivatterImage'
+        PrivatterImage: 'PrivatterImage',
+        LofterArchive: 'LofterArchive',
     });
     const SiteType = (() => {
         if (window.location.origin === 'https://twitter.com') {
@@ -98,14 +100,18 @@
         else if (window.location.origin === 'https://d2pqhom6oey9wx.cloudfront.net') {
             return SiteTypeEnum.PrivatterImage;
         }
+        else if (window.location.hosturl === 'https://www.lofter.com') {
+            return SiteTypeEnum.LofterArchive;
+        }
     })();
 
     //#endregion Constants
 
     //#region Styles
 
-    GM_addStyle('.fadMarkDownloaded {background-color:Gainsboro;}');
-    GM_addStyle('.fad {font-size:15px;line-height:30px;font-family:Arial;font-weight:normal;position:fixed;top:30%;left:12%;width:300px;}');
+    GM_addStyle('.fadMarkDownloaded {background-color:Gainsboro;filter:none !important;}');
+    GM_addStyle('.fad {font-size:15px;line-height:30px;font-family:Arial;font-weight:normal;position:fixed;top:30%;left:12%;width:300px;text-align:left}');
+    GM_addStyle('.fad__lofter {font-size:15px;line-height:30px;font-family:Arial;font-weight:normal;position:fixed;top:30%;left:62%;width:300px;text-align:left}');
     GM_addStyle('.fad input, input::-webkit-input-placeholder{font-size:10px;}');
     GM_addStyle('.fad__trigger {color:#ee1166;cursor:pointer;font-weight:bold;text-shadow:-1px 0 white, 0 1px white, 1px 0 white, 0 -1px white}');
     GM_addStyle('.fad__panel {background-color:rgba(255,255,255,0.9);color:black;padding:5px;box-shadow:0px 0px 15px #fff;border:10px solid;border-image-slice:1;border-width:5px;border-image-source:linear-gradient(to bottom,#ff7722,white,#0077dd);}');
@@ -117,16 +123,19 @@
     GM_addStyle('.fad__download {background-color:#ee1166;cursor:pointer;padding:10px 5px;color:white;border-radius:4px;margin-top:5px;}');
     GM_addStyle('.fad__status {color:#ff7722}');
     GM_addStyle('.fad__twitterUserInfo {color:#0077dd}');
-    GM_addStyle('.fad__addUserInfo {background-color:#ff7722;cursor:pointer;padding:10px 5px;color:white;border-radius:4px;}');
-    GM_addStyle('.fad__addUserInfoSiteUserId, .fad__addUserInfoTwitterUserId {width:55px;}');
-    GM_addStyle('.fad__addUserInfoTwitterUsername {width:70px;}');
+    GM_addStyle('.fad__addTwitterUserInfo {background-color:#ff7722;cursor:pointer;padding:10px 5px;color:white;border-radius:4px;}');
+    GM_addStyle('.fad__addTwitterUserInfoSiteUserId, .fad__addTwitterUserInfoTwitterUserId {width:55px;}');
+    GM_addStyle('.fad__addTwitterUserInfoTwitterUsername {width:70px;}');
     GM_addStyle('.fad__exportDB {background-color:#0077dd;cursor:pointer;padding:10px 5px;color:white;border-radius:4px;}');
     GM_addStyle('.fad__importDB {background-color:#ff7722;cursor:pointer;padding:10px 5px;color:white;border-radius:4px;}');
     GM_addStyle('.fad__fileUploadImportDB {position:absolute !important;height:1px;width:1px;overflow:hidden;clip:rect(1px, 1px, 1px, 1px);}');
     GM_addStyle('.fad__fileUploadImportDB:focus+label,fad__fileUploadImportDB:focus-within+label {outline: thin dotted;}');
+    GM_addStyle('.fad__poipiku__download {width:24px !important;height:24px !important;position:absolute;top:121px;left:0;padding:2.5px 50.5px;cursor:pointer;filter:opacity(0.5) drop-shadow(0 0 0 #0077DD) saturate(1000%);}');
+
     const TwitterDownloadIconHTML = '<g xmlns="http://www.w3.org/2000/svg" style="color:#0077dd;"><g transform="rotate(-180 11.999625205993652,9.00012493133545)"><path d="M17.53 7.47l-5-5c-.293-.293-.768-.293-1.06 0l-5 5c-.294.293-.294.768 0 1.06s.767.294 1.06 0l3.72-3.72V15c0 .414.336.75.75.75s.75-.336.75-.75V4.81l3.72 3.72c.146.147.338.22.53.22s.384-.072.53-.22c.293-.293.293-.767 0-1.06z"/></g><g><path d="M19.708 21.944H4.292C3.028 21.944 2 20.916 2 19.652V14c0-.414.336-.75.75-.75s.75.336.75.75v5.652c0 .437.355.792.792.792h15.416c.437 0 .792-.355.792-.792V14c0-.414.336-.75.75-.75s.75.336.75.75v5.652c0 1.264-1.028 2.292-2.292 2.292z"/></g></g>'
     const TwitterMarkIconHTML = '<g xmlns="http://www.w3.org/2000/svg" style="color:#ff7722;"><g transform="rotate(0 11.999625205993652,9.00012493133545)"><path d="M17.53 7.47l-5-5c-.293-.293-.768-.293-1.06 0l-5 5c-.294.293-.294.768 0 1.06s.767.294 1.06 0l3.72-3.72V15c0 .414.336.75.75.75s.75-.336.75-.75V4.81l3.72 3.72c.146.147.338.22.53.22s.384-.072.53-.22c.293-.293.293-.767 0-1.06z"/></g><g><path d="M19.708 21.944H4.292C3.028 21.944 2 20.916 2 19.652V14c0-.414.336-.75.75-.75s.75.336.75.75v5.652c0 .437.355.792.792.792h15.416c.437 0 .792-.355.792-.792V14c0-.414.336-.75.75-.75s.75.336.75.75v5.652c0 1.264-1.028 2.292-2.292 2.292z"/></g></g>'
     const TwitterModalSelector = 'div[aria-modal="true"]';
+    const LofterDownloadIconHTML = '<img class="fad__poipiku__download" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABmJLR0QA/wD/AP+gvaeTAAAAr0lEQVRIie2UvQ0CMQyFP/6EoOEkOkRHTXUNS9xMTMEELEDDOGyA0EEBouIK3lEFsE9Jl096suQkfnYRQyYyPclM32mwlcwMnQYz5333BG6yQRSDBVAF8pXOfjIwGCyBI3AD5sqtgB2wB86GGn/ZADVwkmrlolICF+CaonjLWurMCDgoJnlbAC9FL8G3yf/Bt2VX4FzLGBfhBHjwHrWL7qrxIdTlFBg7u295yiRjpwGaCCKGL3wj4wAAAABJRU5ErkJggg=="/>'
 
     //#endregion Styles
 
@@ -174,6 +183,9 @@
         else if (isPrivatter()) {
             privatterMarkDownloaded();
         }
+        else if (isLofterArchive()) {
+            $(document).on('DOMNodeInserted', lofterInjectDownloadButton);
+        }
     }//end initialize
 
     //#endregion Initializations
@@ -181,10 +193,16 @@
     //#region HTML/Event Functions
 
     function injectFADPanel() {
-        $('body').append('<div class="fad"></div>');
-        $('.fad').append('<label class="fad__trigger">FAD</label>');
-        $('.fad').append('<div class="fad__panel"></div>');
-
+        if (isLofterArchive()) {
+            $('body').append('<div class="fad__lofter"></div>');
+            $('.fad__lofter').append('<label class="fad__trigger">FAD</label>');
+            $('.fad__lofter').append('<div class="fad__panel"></div>');
+        } else {
+            $('body').append('<div class="fad"></div>');
+            $('.fad').append('<label class="fad__trigger">FAD</label>');
+            $('.fad').append('<div class="fad__panel"></div>');
+        }
+        
         const headerTextHTML = '<label class="fad__headerText">Fan Art Downloader</label>';
         const downloadHTML = '<label class="fad__download">DOWNLOAD</label>';
         $('.fad__panel').append('<div class="fad__header">'+headerTextHTML+'&nbsp;&nbsp;&nbsp;'+downloadHTML+'</div>');
@@ -192,11 +210,11 @@
         $('.fad__panel').append('<div class="fad__status"></div>');
         $('.fad__panel').append('<div class="fad__twitterUserInfo"></div>');
 
-        const addUserInfoSiteUserIdHTML = '<input type="text" class="fad__addUserInfoSiteUserId" placeholder="SiteUserId" />';
-        const addUserInfoTwitterUsernameHTML = '<input type="text" class="fad__addUserInfoTwitterUsername" placeholder="TUsername" />';
-        const addUserInfoTwitterUserIdHTML = '<input type="text" class="fad__addUserInfoTwitterUserId" placeholder="TUserId" />';
-        const addUserInfoHTML = '<label class="fad__addUserInfo">ADD</label>';
-        $('.fad__panel').append('<div>'+ addUserInfoSiteUserIdHTML + addUserInfoTwitterUsernameHTML + addUserInfoTwitterUserIdHTML + '&nbsp;&nbsp;&nbsp;' + addUserInfoHTML + '</div>');
+        const addTwitterUserInfoSiteUserIdHTML = '<input type="text" class="fad__addTwitterUserInfoSiteUserId" placeholder="SiteUserId" />';
+        const addTwitterUserInfoTwitterUsernameHTML = '<input type="text" class="fad__addTwitterUserInfoTwitterUsername" placeholder="TUsername" />';
+        const addTwitterUserInfoTwitterUserIdHTML = '<input type="text" class="fad__addTwitterUserInfoTwitterUserId" placeholder="TUserId" />';
+        const addTwitterUserInfoHTML = '<label class="fad__addTwitterUserInfo">ADD</label>';
+        $('.fad__panel').append('<div>'+ addTwitterUserInfoSiteUserIdHTML + addTwitterUserInfoTwitterUsernameHTML + addTwitterUserInfoTwitterUserIdHTML + '&nbsp;&nbsp;&nbsp;' + addTwitterUserInfoHTML + '</div>');
         
         $('.fad__panel').append('<div><label><input class="fad__forceDownload" type="checkbox" /> Force Download?</label></div>');
         $('.fad__panel').append('<div><label><input class="fad__markDownloaded" type="checkbox" /> Mark Downloaded?</label></div>');
@@ -209,7 +227,7 @@
         
         $('.fad__trigger').click(expandCollapsePanel);
         $('.fad__download').click(downloadMedia);
-        $('.fad__addUserInfo').click(addUserInfo);
+        $('.fad__addTwitterUserInfo').click(addTwitterUserInfo);
         $('.fad__forceDownload').click(chkForceDownloadClicked);
         $('.fad__markDownloaded').click(chkMarkDownloadedClicked);
         $('.fad__hideDownloaded').click(chkHideDownloadedClicked);
@@ -395,7 +413,7 @@
             url = response;
         }
 
-        const fileName = getDownloadImageFileName(twitterUserId, twitterUsername, imgSeriesId, imgIndex, imgExtension);
+        const fileName = getDownloadTwitterImageFileName(twitterUserId, twitterUsername, imgSeriesId, imgIndex, imgExtension);
         await gmDownload(url, fileName);
         await sleep(150);
 
@@ -443,7 +461,7 @@
         setStatusText_StartDownload();
 
         const url = 'data:text/plain;charset=utf-8,' + encodeURIComponent(textContent);
-        const fileName = getDownloadTextFileName(twitterUserId, twitterUsername, textId + title);
+        const fileName = getDownloadTwitterTextFileName(twitterUserId, twitterUsername, textId + title);
         await gmDownload(url, fileName);
         await dbInsertDownloadRecord(twitterUserId, textId, MediaTypeEnum.Text);
         await sleep(150);
@@ -451,6 +469,47 @@
         setStatusText_Downloaded();
         setTwitterUserInfo(twitterUserId, twitterUsername, textId);
     }//end downloadTexts
+
+    async function downloadLofterTexts(event) {
+        const textId = event.data;
+        const $tile = $('li#'+textId);
+        const title = $tile.find('h3').text();
+
+        const pageUrl = $tile.find('a').prop('href');
+        const textPageContent = await gmGet(pageUrl);
+        const $textPageContent = $('<div/>').html(textPageContent).contents();
+        const $textContent = $textPageContent.find('div.text').last();
+        const textContent = $textContent.html()
+            .replace(/<br>/gi, '\n').replace(/<br>/gi, '\n')
+            .replace(/<p>/gi, '\n').replace(/<\/p>/gi, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/<(?:.|\s)*?>/g, '');
+        log({html: $textContent.html(), text: textContent, title: title});
+
+        const lofterUserInfo = await getLofterUserInfo();
+        const lofterUsername = lofterUserInfo.LofterUsername;
+        const lofterUserAlias = lofterUserInfo.LofterUserAlias;
+
+        if (!ForceDownload) {
+            const recordCount = await dbGetDownloadRecordCount(lofterUsername, textId, MediaTypeEnum.Text);
+            if (recordCount !== 0) { setStatusText_NotDownloaded(); return; }
+        }
+
+        setStatusText_StartDownload();
+
+        const url = 'data:text/plain;charset=utf-8,' + encodeURIComponent(textContent);
+        const fileName = getDownloadLofterTextFileName(lofterUsername, lofterUserAlias, title);
+        await gmDownload(url, fileName);
+        await dbInsertDownloadRecord(lofterUsername, textId, MediaTypeEnum.Text);
+        await sleep(150);
+
+        setStatusText_Downloaded();
+
+        const $download = $tile.find('.fad__poipiku__download');
+        $tile.addClass('fadMarkDownloaded');
+        $download.addClass('fadMarkDownloaded');
+        if (HideDownloaded) { $tile.hide(); }
+    }//end downloadLofterTexts
 
     //#endregion Download Text Function
 
@@ -496,7 +555,7 @@
 
     async function downloadMp4Video(twitterUserInfo, videoId, videoUrl) {
         const twitterUserId = twitterUserInfo.TwitterUserId, twitterUsername = twitterUserInfo.TwitterUsername;
-        const fileName = getDownloadMp4FileName(twitterUserId, twitterUsername, videoId);
+        const fileName = getDownloadTwitterMp4FileName(twitterUserId, twitterUsername, videoId);
         await gmDownload(videoUrl, fileName);
         await sleep(150);
 
@@ -1123,8 +1182,15 @@
 
     function poipikuGetTextTitle() {
         let title = '';
-        let $title = $('span.IllustItemThumbText').find('span.NovelTitle')
-        if ($title.length) { title = '-' + $title.text(); }
+        let $title = $('span.IllustItemThumbText').find('span.NovelTitle');
+        log($title);
+        log('text:' + $title.text());
+        if ($title.length && $title.text() !== '') { title = '-' + $title.text(); return title; }
+
+        $title = $('h1.IllustItemDesc');
+        log($title);
+        log('text:' + $title.text());
+        if ($title.length && $title.text() !== '') { title = '-' + $title.text(); return title; }
         return title;
     }//end poipikuGetTextTitle
 
@@ -1313,6 +1379,58 @@
     //#endregion Privatter Text Functions
 
     //#endregion Privatter Helper Functions
+
+    //#region Lofter Helper Functions
+
+    function lofterOnDOMNodeInserted(event) {
+        lofterInjectDownloadButton(event);
+    }
+
+    async function lofterInjectDownloadButton(event) {
+        const $tile = $(event.target);
+        if ($tile.prop('tagName') !== 'LI' && !$tile.hasClass('text')) { return; }
+
+        $('.m-filecnt .list li').attr('style', 'display:block; overflow:unset !important; margin:0 0 50px 0;');
+        
+        const textId = $tile.prop('id');
+
+        const $download = $(LofterDownloadIconHTML);
+        $tile.append($download);
+        $download.click(textId, downloadLofterTexts);
+
+        const lofterUserInfo = await getLofterUserInfo();
+        const lofterUsername = lofterUserInfo.LofterUsername;
+        const countInDB = await dbGetDownloadRecordCount(lofterUsername, textId, null, IndexedDBIndexEnum.CompUserMediaIndex);
+        if (countInDB !== 0) {
+            $tile.addClass('fadMarkDownloaded');
+            $download.addClass('fadMarkDownloaded');
+            if (HideDownloaded) { $tile.hide(); }
+        }
+    }//end lofterInjectDownloadButton
+
+    //#region Lofter Get Metadata Functions
+
+    function lofterGetUsername() {
+        const regex = /https:\/\/(.*)\.lofter.com/;
+        const match = regex.exec(window.location.origin);
+        return match[1];
+    }//end lofterGetUsername
+
+    function lofterGetUserAlias() {
+        return $('h1.w-bttl2.w-bttl-hd').children().last().text();
+    }//end lofterGetUserAlias
+
+    //#endregion Lofter Get Metadata Functions
+
+    //#region Lofter Text Functions
+
+    function ajaxGetLofterTextContent(textUrl) {
+        return gmGet(textUrl);
+    }//end ajaxGetLofterTextContent
+
+    //#endregion Lofter Text Functions
+
+    //#endregion Lofter Helper Functions
 
     //#region Web Method Helper Functions
 
@@ -1700,6 +1818,10 @@
         return SiteType === SiteTypeEnum.PrivatterImage;
     }//end isPrivatterImage
 
+    function isLofterArchive() {
+        return SiteType === SiteTypeEnum.LofterArchive;
+    }
+
     function getShortUrl(url) {
         if (url.length > 80) {
             url = url.substring(0, 50) + '...' + url.substring(url.length - 20, url.length);
@@ -1778,15 +1900,15 @@
         return null;
     }//end getTwitterUserInfo
 
-    function addUserInfo() {
-        const siteUserId = $('.fad__addUserInfoSiteUserId').val();
-        const twitterUsername = $('.fad__addUserInfoTwitterUsername').val();
-        const twitterUserId = $('.fad__addUserInfoTwitterUserId').val();
+    function addTwitterUserInfo() {
+        const siteUserId = $('.fad__addTwitterUserInfoSiteUserId').val();
+        const twitterUsername = $('.fad__addTwitterUserInfoTwitterUsername').val();
+        const twitterUserId = $('.fad__addTwitterUserInfoTwitterUserId').val();
         if (siteUserId && twitterUsername && twitterUserId) {
             log('Adding to User DB table: SiteUserId='+siteUserId+' twitterUsername='+twitterUsername+' twitterUserId='+twitterUserId)
             dbInsertUserRecord(siteUserId, twitterUserId, twitterUsername);
         }
-    }//end addUserInfo
+    }//end addTwitterUserInfo
 
     async function ajaxGetTwitterUserId(username) {
         let userId = null;
@@ -1863,6 +1985,20 @@
 
     //#endregion Twitter UserInfo Functions
 
+    //#region Lofter UserInfo Functions
+
+    async function getLofterUserInfo() {
+        const lofterUsername = lofterGetUsername();
+        const lofterUserAlias = lofterGetUserAlias();
+
+        return {
+            LofterUsername: lofterUsername,
+            LofterUserAlias: lofterUserAlias
+        };
+    }//end getLofterUserInfo
+
+    //#endregion Lofter UserInfo Functions
+
     //#region Update Panel Info Functions
 
     function setStatusText(text) {
@@ -1927,29 +2063,35 @@
         return name;
     }//end getValidWindowsFileName
 
-    function getDownloadImageFileName(twitterUserId, twitterUsername, imgSeriesId, imgIndex, imgExtension) {
+    function getDownloadTwitterImageFileName(twitterUserId, twitterUsername, imgSeriesId, imgIndex, imgExtension) {
         const folderName = getValidWindowsFileName(twitterUserId + '-' + twitterUsername);
         const fileName = getValidWindowsFileName(imgSeriesId + '-' + imgIndex + '.' + imgExtension);
         return '###[FAD]###/Twitter/Pictures/' + folderName + '/' + fileName;
-    }//end getDownloadImageFileName
+    }//end getDownloadTwitterImageFileName
 
-    function getDownloadTextFileName(twitterUserId, twitterUsername, textId) {
+    function getDownloadTwitterTextFileName(twitterUserId, twitterUsername, textId) {
         const folderName = getValidWindowsFileName(twitterUserId + '-' + twitterUsername);
-        const fielName = getValidWindowsFileName('[' + twitterUsername + '] ' + textId + '.txt');
-        return '###[FAD]###/Twitter/Books/' + folderName + '/' + fielName;
-    }//end getDownloadTextFileName
+        const fileName = getValidWindowsFileName('[' + twitterUsername + '] ' + textId + '.txt');
+        return '###[FAD]###/Twitter/Books/' + folderName + '/' + fileName;
+    }//end getDownloadTwitterTextFileName
 
-    function getDownloadMp4FileName(twitterUserId, twitterUsername, videoId) {
+    function getDownloadTwitterMp4FileName(twitterUserId, twitterUsername, videoId) {
         const folderName = getValidWindowsFileName(twitterUserId + '-' + twitterUsername);
         const fileName = getValidWindowsFileName(videoId + '.mp4');
         return '###[FAD]###/Twitter/Videos/' + folderName + '/' + fileName;
-    }//end getDownloadMp4FileName
+    }//end getDownloadTwitterMp4FileName
 
     function getDownloadGifFileName(twitterUserId, twitterUsername, videoId) {
         const folderName = getValidWindowsFileName(twitterUserId + '-' + twitterUsername);
         const fileName = getValidWindowsFileName(videoId + '.gif');
         return '###[FAD]###/Twitter/Pictures/' + folderName + '/' + fileName;
     }//end getDownloadGifFileName
+
+    function getDownloadLofterTextFileName(lofterUsername, lofterUserAlis, textId) {
+        const folderName = getValidWindowsFileName(lofterUsername + '-' + lofterUserAlis);
+        const fileName = getValidWindowsFileName('[' + lofterUsername + '] ' + textId + '.txt');
+        return '###[FAD]###/Lofter/Books/' + folderName + '/' + fileName;
+    }//end getDownloadTwitterTextFileName
 
     //#endregion Save Functions
 
