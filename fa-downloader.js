@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         FA Downloader
 // @namespace    fa-downloader
-// @version      1.1.0
+// @version      1.1.1
 // @description  Download FA Media from sites including Twitter/Poipiku/Privatter/Lofter
 // @author       miravois
 // @license      MIT
@@ -51,24 +51,30 @@
     const IndexedDBKeyEnum = Object.freeze({
         ID: 'ID',
         // <SiteType>
-        TwitterUserId: 'TwitterUserId',
+        TwitterUserId: 'TwitterUserId', // Twitter/Poipiku/Privatter
+        LofterUserId: 'LofterUserId', // LofterArchive
         MediaId: 'MediaId',
         MediaType: 'MediaType',
         // <SiteType>User
-        // TwitterUserId: 'TwitterUserId',
-        TwitterUsername: 'TwitterUsername',
+        // TwitterUserId: 'TwitterUserId', // Twitter/Poipiku/Privatter
+        // LofterUserId: 'LofterUserId', // LofterArchive
+        TwitterUsername: 'TwitterUsername', // Twitter/Poipiku/Privatter
+        LofterUsername: 'LofterUsername', // LofterArchive
         SiteUserId: 'SiteUserId',
     });
     const IndexedDBIndexEnum = Object.freeze({
         // <SiteType>
-        TwitterUserId: 'TwitterUserId',
+        TwitterUserId: 'TwitterUserId', // Twitter/Poipiku/Privatter
+        LofterUserId: 'LofterUserId', // LofterArchive
         MediaId: 'MediaId',
         CompUserMediaIndex: 'CompUserMediaIndex', // [ IndexedDBKeyEnum.TwitterUserId, IndexedDBKeyEnum.MediaId ]
         CompMediaIndex: 'CompMediaIndex', // [ IndexedDBKeyEnum.MediaId, IndexedDBKeyEnum.MediaType ]
         CompAllIndex: 'CompAllIndex',
         // <SiteType>User
-        // TwitterUserId: 'TwitterUserId',
-        TwitterUsername: 'TwitterUsername',
+        // TwitterUserId: 'TwitterUserId', // Twitter/Poipiku/Privatter
+        // LofterUserId: 'LofterUserId', // LofterArchive
+        TwitterUsername: 'TwitterUsername', // Twitter/Poipiku/Privatter
+        LofterUsername: 'LofterUsername', // LofterArchive
         SiteUserId: 'SiteUserId',
     });
     const MediaTypeEnum = Object.freeze({
@@ -276,10 +282,18 @@
 
     async function downloadMedia(event) {
         if (hasImages(event)) {
-            await downloadImages(event);
+            if (isLofterArchive()) {
+                downloadLofterImages(event);
+            } else {
+                await downloadImages(event);
+            }
         }
         if (hasTexts(event)) {
-            await downloadTexts();
+            if (isLofterArchive()) {
+                await downloadLofterTexts(event);
+            } else {
+                await downloadTexts(event);
+            }
         }
         if (hasVideo(event)) {
             await downloadVideo(event);
@@ -297,11 +311,21 @@
             }
             return imageTags.length;
         }
+        if (isLofterArchive()) {
+            const textId = event.data;
+            const $tile = $('li#'+textId);
+            return $tile.hasClass('img');
+        }
         return (isPoipiku() && poipikuGetImageUrls().length)
             || (isPrivatter() && privatterGetImageUrls().length);
     }//end hasImages
 
     function hasTexts(event) {
+        if (isLofterArchive()) {
+            const textId = event.data;
+            const $tile = $('li#'+textId);
+            return $tile.hasClass('text');
+        }
         return (isPoipiku() && $('a.IllustItemText').length)
             || (isPrivatter() && privatterGetMediaType() === 'p');
     }//end hasTexts
@@ -363,7 +387,7 @@
 
         setStatusText_StartDownload();
 
-        for (let i = 0; i < imgUrls.length; i++) {
+        for (let i=0; i<imgUrls.length; i++) {
             let imgIndex = i;
             if (isTwitter()) {
                 if (twitterTweetSelector === TwitterModalSelector) {
@@ -419,6 +443,45 @@
 
         log('Downloaded fileName: ' + fileName);
     }//end downloadImageFromUrl
+
+    async function downloadLofterImages(event) {
+        const imgSeriesId = event.data;
+        const $tile = $('li#'+imgSeriesId);
+
+        const pageUrl = $tile.find('a').prop('href');
+        const imagePageContent = await gmGet(pageUrl);
+        const $imagePageContent = $('<div/>').html(imagePageContent).contents();
+
+        const lofterUserInfo = await getLofterUserInfo();
+        const lofterUserId = lofterUserInfo.LofterUserId;
+        const lofterUsername = lofterUserInfo.LofterUsername;
+
+        if (!ForceDownload) {
+            const recordCount = await dbGetDownloadRecordCount(lofterUserId, imgSeriesId, MediaTypeEnum.Image);
+            if (recordCount !== 0) { setStatusText_NotDownloaded(); return; }
+        }
+
+        setStatusText_StartDownload();
+
+        const $images = $imagePageContent.find('a.imgclasstag');
+        for (let i=0; i<$images.length; i++) {
+            const imgIndex = i;
+            const imgUrl = $($images[i]).attr('bigimgsrc').match(/(.*?)\.(jpg|png|jpeg|gif)/i)[0];
+            const imgExtension = /img\/.*\.(.*)/g.exec(imgUrl)[1];
+
+            const fileName = getDownloadLofterImageFileName(lofterUserId, lofterUsername, imgSeriesId, imgIndex, imgExtension);
+            await gmDownload(imgUrl, fileName);
+            await sleep(150);
+        }
+
+        await dbInsertDownloadRecord(lofterUserId, imgSeriesId, MediaTypeEnum.Image);
+        setStatusText_Downloaded();
+
+        const $download = $tile.find('.fad__poipiku__download');
+        $tile.addClass('fadMarkDownloaded');
+        $download.addClass('fadMarkDownloaded');
+        if (HideDownloaded) { $tile.hide(); }
+    }//end downloadLofterTexts
 
     //#endregion Download Image Functions
 
@@ -487,20 +550,20 @@
         log({html: $textContent.html(), text: textContent, title: title});
 
         const lofterUserInfo = await getLofterUserInfo();
+        const lofterUserId = lofterUserInfo.LofterUserId;
         const lofterUsername = lofterUserInfo.LofterUsername;
-        const lofterUserAlias = lofterUserInfo.LofterUserAlias;
 
         if (!ForceDownload) {
-            const recordCount = await dbGetDownloadRecordCount(lofterUsername, textId, MediaTypeEnum.Text);
+            const recordCount = await dbGetDownloadRecordCount(lofterUserId, textId, MediaTypeEnum.Text);
             if (recordCount !== 0) { setStatusText_NotDownloaded(); return; }
         }
 
         setStatusText_StartDownload();
 
         const url = 'data:text/plain;charset=utf-8,' + encodeURIComponent(textContent);
-        const fileName = getDownloadLofterTextFileName(lofterUsername, lofterUserAlias, title);
+        const fileName = getDownloadLofterTextFileName(lofterUserId, lofterUsername, title);
         await gmDownload(url, fileName);
-        await dbInsertDownloadRecord(lofterUsername, textId, MediaTypeEnum.Text);
+        await dbInsertDownloadRecord(lofterUserId, textId, MediaTypeEnum.Text);
         await sleep(150);
 
         setStatusText_Downloaded();
@@ -1396,11 +1459,11 @@
 
         const $download = $(LofterDownloadIconHTML);
         $tile.append($download);
-        $download.click(textId, downloadLofterTexts);
+        $download.click(textId, downloadMedia);
 
         const lofterUserInfo = await getLofterUserInfo();
-        const lofterUsername = lofterUserInfo.LofterUsername;
-        const countInDB = await dbGetDownloadRecordCount(lofterUsername, textId, null, IndexedDBIndexEnum.CompUserMediaIndex);
+        const lofterUserId = lofterUserInfo.LofterUserId;
+        const countInDB = await dbGetDownloadRecordCount(lofterUserId, textId, null, IndexedDBIndexEnum.CompUserMediaIndex);
         if (countInDB !== 0) {
             $tile.addClass('fadMarkDownloaded');
             $download.addClass('fadMarkDownloaded');
@@ -1508,20 +1571,40 @@
                     db.deleteObjectStore(SiteTypeEnum.Privatter);
 
                     const store = db.createObjectStore(SiteType, { keyPath: 'ID', autoIncrement: true });
-                    store.createIndex(IndexedDBIndexEnum.TwitterUserId, IndexedDBKeyEnum.TwitterUserId, { unique: false });
-                    store.createIndex(IndexedDBIndexEnum.MediaId, IndexedDBKeyEnum.MediaId, { unique: false });
-                    store.createIndex(IndexedDBIndexEnum.CompUserMediaIndex,
-                        [IndexedDBKeyEnum.TwitterUserId, IndexedDBKeyEnum.MediaId], { unique: false });
-                    store.createIndex(IndexedDBIndexEnum.CompMediaIndex,
-                        [IndexedDBKeyEnum.MediaId, IndexedDBKeyEnum.MediaType], { unique: false });
-                    store.createIndex(IndexedDBIndexEnum.CompAllIndex,
-                        [IndexedDBKeyEnum.TwitterUserId, IndexedDBKeyEnum.MediaId, IndexedDBKeyEnum.MediaType], { unique: true });
+
+                    if (isLofterArchive()) {
+                        store.createIndex(IndexedDBIndexEnum.LofterUserId, IndexedDBKeyEnum.LofterUserId, { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.MediaId, IndexedDBKeyEnum.MediaId, { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.CompUserMediaIndex,
+                            [IndexedDBKeyEnum.LofterUserId, IndexedDBKeyEnum.MediaId], { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.CompMediaIndex,
+                            [IndexedDBKeyEnum.MediaId, IndexedDBKeyEnum.MediaType], { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.CompAllIndex,
+                            [IndexedDBKeyEnum.LofterUserId, IndexedDBKeyEnum.MediaId, IndexedDBKeyEnum.MediaType], { unique: true });
+                    } else {
+                        store.createIndex(IndexedDBIndexEnum.TwitterUserId, IndexedDBKeyEnum.TwitterUserId, { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.MediaId, IndexedDBKeyEnum.MediaId, { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.CompUserMediaIndex,
+                            [IndexedDBKeyEnum.TwitterUserId, IndexedDBKeyEnum.MediaId], { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.CompMediaIndex,
+                            [IndexedDBKeyEnum.MediaId, IndexedDBKeyEnum.MediaType], { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.CompAllIndex,
+                            [IndexedDBKeyEnum.TwitterUserId, IndexedDBKeyEnum.MediaId, IndexedDBKeyEnum.MediaType], { unique: true });
+                    }
+                    
                 }
                 if (oldVersion < 3) {
                     const store = db.createObjectStore(SiteType + 'User', { keyPath: 'ID', autoIncrement: true });
-                    store.createIndex(IndexedDBIndexEnum.SiteUserId, IndexedDBKeyEnum.SiteUserId, { unique: true });
-                    store.createIndex(IndexedDBIndexEnum.TwitterUserId, IndexedDBKeyEnum.TwitterUserId, { unique: false });
-                    store.createIndex(IndexedDBIndexEnum.TwitterUsername, IndexedDBKeyEnum.TwitterUsername, { unique: false });
+
+                    if (isLofterArchive()) {
+                        store.createIndex(IndexedDBIndexEnum.SiteUserId, IndexedDBKeyEnum.SiteUserId, { unique: true });
+                        store.createIndex(IndexedDBIndexEnum.LofterUserId, IndexedDBKeyEnum.LofterUserId, { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.LofterUsername, IndexedDBKeyEnum.LofterUsername, { unique: false });
+                    } else {
+                        store.createIndex(IndexedDBIndexEnum.SiteUserId, IndexedDBKeyEnum.SiteUserId, { unique: true });
+                        store.createIndex(IndexedDBIndexEnum.TwitterUserId, IndexedDBKeyEnum.TwitterUserId, { unique: false });
+                        store.createIndex(IndexedDBIndexEnum.TwitterUsername, IndexedDBKeyEnum.TwitterUsername, { unique: false });
+                    }
                 }
             },
             terminated() {
@@ -1552,15 +1635,19 @@
         log('Finished dbDeleteErrorRecords()');
     }//end dbDeleteErrorRecords
 
-    async function dbInsertDownloadRecord(twitterUserId, mediaId, mediaType) {
-        const count = await dbGetDownloadRecordCount(twitterUserId, mediaId, mediaType);
+    async function dbInsertDownloadRecord(userId, mediaId, mediaType) {
+        const count = await dbGetDownloadRecordCount(userId, mediaId, mediaType);
         if (count !== 0) { return; }
 
-        let param = [twitterUserId, mediaId, mediaType].join(',');
+        let param = [userId, mediaId, mediaType].join(',');
         log('Starting dbInsertDownloadRecord(' + param + ')...');
 
+        let userIdKey = null;
+        if (isLofterArchive()) { userIdKey = IndexedDBKeyEnum.LofterUserId; } 
+        else { userIdKey = IndexedDBKeyEnum.TwitterUserId; }
+
         let record = {};
-        record[IndexedDBKeyEnum.TwitterUserId] = twitterUserId;
+        record[userIdKey] = userId;
         record[IndexedDBKeyEnum.MediaId] = mediaId;
         record[IndexedDBKeyEnum.MediaType] = mediaType;
 
@@ -1574,10 +1661,10 @@
         log('Finished dbInsertDownloadRecord(' + param + ')');
     }//end dbInsertDownloadRecord
 
-    async function dbGetDownloadRecordCount(twitterUserId, mediaId, mediaType, indexName) {
+    async function dbGetDownloadRecordCount(userId, mediaId, mediaType, indexName) {
         if (!indexName) { indexName = IndexedDBIndexEnum.CompAllIndex; }
 
-        let param = [twitterUserId, mediaId, mediaType, indexName].join(',');
+        let param = [userId, mediaId, mediaType, indexName].join(',');
         if (!HideGetDownloadRecordCountMessage) {
             log('Starting dbGetDownloadRecordCount(' + param + ')...');
         }
@@ -1585,20 +1672,21 @@
         let key = null;
         switch (indexName) {
             case IndexedDBIndexEnum.TwitterUserId:
-                key = twitterUserId;
+            case IndexedDBIndexEnum.LofterUserId:
+                key = userId;
                 break;
             case IndexedDBIndexEnum.MediaId:
                 key = mediaId;
                 break;
             case IndexedDBIndexEnum.CompUserMediaIndex:
-                key = [twitterUserId, mediaId];
+                key = [userId, mediaId];
                 break;
             case IndexedDBIndexEnum.CompMediaIndex:
                 key = [mediaId, mediaType];
                 break;
             case IndexedDBIndexEnum.CompAllIndex:
             default:
-                key = [twitterUserId, mediaId, mediaType];
+                key = [userId, mediaId, mediaType];
                 break;
         }
 
@@ -1615,17 +1703,21 @@
         return count;
     }//end dbGetDownloadRecordCount
 
-    async function dbInsertUserRecord(siteUserId, twitterUserId, twitterUsername) {
+    async function dbInsertUserRecord(siteUserId, userId, username) {
         const count = await dbGetUserRecord(siteUserId);
         if (count) { return; }
 
-        let param = [siteUserId, twitterUserId, twitterUsername].join(',');
+        let param = [siteUserId, userId, username].join(',');
         log('Starting dbInsertUserRecord(' + param + ')...');
+
+        let userIdKey = null, usernameKey = null;
+        if (isLofterArchive()) { userIdKey = IndexedDBKeyEnum.LofterUserId; usernameKey = IndexedDBKeyEnum.LofterUsername; } 
+        else { userIdKey = IndexedDBKeyEnum.TwitterUserId; usernameKey = IndexedDBKeyEnum.TwitterUsername; }
 
         let record = {};
         record[IndexedDBKeyEnum.SiteUserId] = siteUserId;
-        record[IndexedDBKeyEnum.TwitterUserId] = twitterUserId;
-        record[IndexedDBKeyEnum.TwitterUsername] = twitterUsername;
+        record[userIdKey] = userId;
+        record[usernameKey] = username;
 
         const storeName = SiteType + 'User';
         const db = await dbGetDB();
@@ -1637,16 +1729,20 @@
         log('Finished dbInsertUserRecord(' + param + ')');
     }//end dbInsertUserRecord
 
-    async function dbPutUserRecord(siteUserId, twitterUserId, twitterUsername) {
-        const userRecord = await dbGetUserRecord(siteUserId, twitterUserId, twitterUsername);
+    async function dbPutUserRecord(siteUserId, userId, username) {
+        const userRecord = await dbGetUserRecord(siteUserId, userId, username);
 
-        let param = [siteUserId, twitterUserId, twitterUsername].join(',');
+        let param = [siteUserId, userId, username].join(',');
         log('Starting dbPutUserRecord(' + param + ')...');
+
+        let userIdKey = null, usernameKey = null;
+        if (isLofterArchive()) { userIdKey = IndexedDBKeyEnum.LofterUserId; usernameKey = IndexedDBKeyEnum.LofterUsername; } 
+        else { userIdKey = IndexedDBKeyEnum.TwitterUserId; usernameKey = IndexedDBKeyEnum.TwitterUsername; }
 
         let record = {};
         record[IndexedDBKeyEnum.SiteUserId] = siteUserId;
-        record[IndexedDBKeyEnum.TwitterUserId] = twitterUserId;
-        record[IndexedDBKeyEnum.TwitterUsername] = twitterUsername;
+        record[userIdKey] = userId;
+        record[usernameKey] = username;
         if (userRecord) {
             record[IndexedDBKeyEnum.ID] = userRecord.ID;
         }
@@ -1661,19 +1757,21 @@
         log('Finished dbPutUserRecord(' + param + ')');
     }//end dbPutUserRecord
 
-    async function dbGetUserRecord(siteUserId, twitterUserId, twitterUsername, indexName) {
+    async function dbGetUserRecord(siteUserId, userId, username, indexName) {
         if (!indexName) { indexName = IndexedDBIndexEnum.SiteUserId; }
 
-        let param = [siteUserId, twitterUserId, twitterUsername, indexName].join(',');
+        let param = [siteUserId, userId, username, indexName].join(',');
         log('Starting dbGetUserRecord(' + param + ')...');
 
         let key = null;
         switch (indexName) {
             case IndexedDBIndexEnum.TwitterUserId:
-                key = twitterUserId;
+            case IndexedDBIndexEnum.LofterUserId:
+                key = userId;
                 break;
             case IndexedDBIndexEnum.TwitterUsername:
-                key = twitterUsername;
+            case IndexedDBIndexEnum.LofterUsername:
+                key = username;
                 break;
             case IndexedDBIndexEnum.SiteUserId:
             default:
@@ -1764,7 +1862,7 @@
         const dbVersion = jsonImport.DBVersion;
 
         if (dbVersion === 1) {
-            await dbClearStore(storeName);
+            //await dbClearStore(storeName);
             const allKeys = jsonImport.Keys;
             for (let i = 0; i < allKeys.length; i++) {
                 const twitterUserId = allKeys[i][0];
@@ -1774,22 +1872,31 @@
             }
         }
         else if (storeName.indexOf('User') !== 0) { // SiteUser store
-            await dbClearStore(storeName);
+            //await dbClearStore(storeName);
             const allValues = jsonImport.Values;
             for (let i = 0; i < allValues.length; i++) {
-                const twitterUserId = allValues[i][IndexedDBKeyEnum.TwitterUserId];
+                let userIdKey = null, usernameKey = null;
+                if (isLofterArchive()) { userIdKey = IndexedDBKeyEnum.LofterUserId; usernameKey = IndexedDBKeyEnum.LofterUsername; } 
+                else { userIdKey = IndexedDBKeyEnum.TwitterUserId; usernameKey = IndexedDBKeyEnum.TwitterUsername; }
+
                 const siteUserId = allValues[i][IndexedDBKeyEnum.SiteUserId];
-                await dbInsertUserRecord(twitterUserId, siteUserId);
+                const userId = allValues[i][userIdKey];
+                const username = allValues[i][usernameKey];
+                await dbInsertUserRecord(siteUserId, userId, username);
             }
         }
         else {
-            await dbClearStore(storeName);
+            //await dbClearStore(storeName);
             const allValues = jsonImport.Values;
             for (let i = 0; i < allValues.length; i++) {
-                const twitterUserId = allValues[i][IndexedDBKeyEnum.TwitterUserId];
+                let userIdKey = null;
+                if (isLofterArchive()) { userIdKey = IndexedDBKeyEnum.LofterUserId; }
+                else { userIdKey = IndexedDBKeyEnum.TwitterUserId; }
+
+                const userId = allValues[i][userIdKey];
                 const mediaId = allValues[i][IndexedDBKeyEnum.MediaId];
                 const mediaType = allValues[i][IndexedDBKeyEnum.MediaType];
-                await dbInsertDownloadRecord(twitterUserId, mediaId, mediaType);
+                await dbInsertDownloadRecord(userId, mediaId, mediaType);
             }
         }
     }//end dbImport
@@ -1988,12 +2095,19 @@
     //#region Lofter UserInfo Functions
 
     async function getLofterUserInfo() {
-        const lofterUsername = lofterGetUsername();
-        const lofterUserAlias = lofterGetUserAlias();
+        const lofterUserId = lofterGetUsername();
+
+        const userRecord = await dbGetUserRecord(lofterUserId);
+        if (userRecord && userRecord.TwitterUserId !== 'error') {
+            return userRecord; 
+        }
+
+        const lofterUsername = lofterGetUserAlias();
+        dbPutUserRecord(lofterUserId, lofterUserId, lofterUsername);
 
         return {
-            LofterUsername: lofterUsername,
-            LofterUserAlias: lofterUserAlias
+            LofterUserId: lofterUserId,
+            LofterUsername: lofterUsername
         };
     }//end getLofterUserInfo
 
@@ -2087,9 +2201,15 @@
         return '###[FAD]###/Twitter/Pictures/' + folderName + '/' + fileName;
     }//end getDownloadGifFileName
 
-    function getDownloadLofterTextFileName(lofterUsername, lofterUserAlis, textId) {
-        const folderName = getValidWindowsFileName(lofterUsername + '-' + lofterUserAlis);
-        const fileName = getValidWindowsFileName('[' + lofterUsername + '] ' + textId + '.txt');
+    function getDownloadLofterImageFileName(lofterUserId, lofterUsername, imgSeriesId, imgIndex, imgExtension) {
+        const folderName = getValidWindowsFileName(lofterUserId + '-' + lofterUsername);
+        const fileName = getValidWindowsFileName(imgSeriesId + '-' + imgIndex + '.' + imgExtension);
+        return '###[FAD]###/Lofter/Pictures/' + folderName + '/' + fileName;
+    }//end getDownloadLofterImageFileName
+
+    function getDownloadLofterTextFileName(lofterUserId, lofterUsername, textId) {
+        const folderName = getValidWindowsFileName(lofterUserId + '-' + lofterUsername);
+        const fileName = getValidWindowsFileName('[' + lofterUserId + '] ' + textId + '.txt');
         return '###[FAD]###/Lofter/Books/' + folderName + '/' + fileName;
     }//end getDownloadTwitterTextFileName
 
