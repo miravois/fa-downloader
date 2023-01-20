@@ -209,7 +209,7 @@
             $('.fad').append('<label class="fad__trigger">FAD</label>');
             $('.fad').append('<div class="fad__panel"></div>');
         }
-        
+
         const headerTextHTML = '<label class="fad__headerText">Fan Art Downloader</label>';
         const downloadHTML = '<label class="fad__download">DOWNLOAD</label>';
         $('.fad__panel').append('<div class="fad__header">'+headerTextHTML+'&nbsp;&nbsp;&nbsp;'+downloadHTML+'</div>');
@@ -222,11 +222,11 @@
         const addTwitterUserInfoTwitterUserIdHTML = '<input type="text" class="fad__addTwitterUserInfoTwitterUserId" placeholder="TUserId" />';
         const addTwitterUserInfoHTML = '<label class="fad__addTwitterUserInfo">ADD</label>';
         $('.fad__panel').append('<div>'+ addTwitterUserInfoSiteUserIdHTML + addTwitterUserInfoTwitterUsernameHTML + addTwitterUserInfoTwitterUserIdHTML + '&nbsp;&nbsp;&nbsp;' + addTwitterUserInfoHTML + '</div>');
-        
+
         $('.fad__panel').append('<div><label><input class="fad__forceDownload" type="checkbox" /> Force Download?</label></div>');
         $('.fad__panel').append('<div><label><input class="fad__markDownloaded" type="checkbox" /> Mark Downloaded?</label></div>');
         $('.fad__panel').append('<div><label><input class="fad__hideDownloaded" type="checkbox" /> Hide Downloaded?</label></div>');
-        
+
         const exportDBHTML = '<label class="fad__exportDB">EXPORT DB</label>';
         const importDBHTML = '<label class="fad__importDB" for="fad__fileUploadImportDB">IMPORT DB</label>';
         $('.fad__panel').append('<div>' + exportDBHTML + '&nbsp;&nbsp;&nbsp;' + importDBHTML + '</div>');
@@ -606,7 +606,7 @@
     async function downloadVideoFromUrl(twitterUserInfo, videoId, videoUrl) {
         if (videoUrl.includes('blob')) { downloadBlobVideo(twitterUserInfo, videoId); }
         else if (videoUrl.includes('ext_tw_video')) { downloadMp4Video(twitterUserInfo, videoId, videoUrl); }
-        else { 
+        else {
             downloadGifVideo(twitterUserInfo, videoId, videoUrl);
             downloadMp4Video(twitterUserInfo, videoId, videoUrl);
         }
@@ -680,7 +680,7 @@
 
     function encode64(input) {
         var output = "", i = 0, l = input.length,
-        key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=", 
+        key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
         chr1, chr2, chr3, enc1, enc2, enc3, enc4;
         while (i < l) {
             chr1 = input.charCodeAt(i++);
@@ -928,7 +928,7 @@
         }
 
         if (!$modal.find('div[role="group"] div.fad-modal-download-icon').length) {
-            const icon = $modal.find('div[role="group"] div:nth-child(4)');
+            const icon = $modal.find('div[role="group"] div:nth-child(5)');
             icon.after(icon.clone());
             icon.attr('class', icon.prev().attr('class'));
 
@@ -951,7 +951,7 @@
         }
 
         if (!tweet.find('div[role="group"] div.fad-download-icon').length) {
-            const icon = tweet.find('div[role="group"] div:nth-child(4)');
+            const icon = tweet.find('div[role="group"] div:nth-child(5)');
             icon.after(icon.clone());
             icon.attr('class', icon.prev().attr('class'));
 
@@ -975,7 +975,7 @@
         }
 
         if (!$modal.find('div[role="group"] div.fad-modal-mark-icon').length) {
-            const icon = $modal.find('div[role="group"] div:nth-child(4)');
+            const icon = $modal.find('div[role="group"] div:nth-child(5)');
             icon.after(icon.clone());
             icon.attr('class', icon.prev().attr('class'));
 
@@ -1007,7 +1007,7 @@
         }
 
         if (!$tweet.find('div[role="group"] div.fad-mark-icon').length) {
-            const icon = $tweet.find('div[role="group"] div:nth-child(4)');
+            const icon = $tweet.find('div[role="group"] div:nth-child(5)');
             icon.after(icon.clone());
             icon.attr('class', icon.prev().attr('class'));
 
