@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         FA Downloader
 // @namespace    fa-downloader
-// @version      1.1.2
+// @version      1.1.3
 // @description  Download FA Media from sites including Twitter/Poipiku/Privatter/Lofter
 // @author       miravois
 // @license      MIT
